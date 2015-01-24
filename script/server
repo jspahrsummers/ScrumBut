@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cabal build && dist/build/ScrumBut/ScrumBut -p 8000
