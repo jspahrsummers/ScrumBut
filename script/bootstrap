@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cabal update
+cabal install --only-dependencies --enable-tests
