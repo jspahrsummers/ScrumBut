@@ -2,5 +2,4 @@
 
 set -e
 
-cabal build
-cabal test
+cabal test -j

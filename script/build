@@ -2,4 +2,4 @@
 
 set -e
 
-cabal build
+cabal build -j
