@@ -2,3 +2,5 @@ language: haskell
 ghc: 7.8
 notifications:
   email: false
+before_install: cabal install -j alex happy
+before_script: script/setup
