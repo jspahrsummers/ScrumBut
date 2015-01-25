@@ -1,4 +1,13 @@
 #!/bin/bash
 
+set -e
+
+brew update
+brew install postgresql
+
 cabal update
-cabal install --only-dependencies --enable-tests
+cabal install -j alex happy yesod-bin
+cabal install -j --only-dependencies --enable-tests
+
+export PGDATA=/usr/local/var/postgres
+pg_ctl status >/dev/null || pg_ctl -l /usr/local/var/postgres/server.log start

@@ -1,3 +1,5 @@
 #!/bin/bash
 
-cabal build && cabal test
+set -e
+
+cabal test -j

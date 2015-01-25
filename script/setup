@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+createuser ScrumBut || true
+createdb --owner=ScrumBut ScrumBut || true
+createdb --owner=ScrumBut ScrumBut_test || true
