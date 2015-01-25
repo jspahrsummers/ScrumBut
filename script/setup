@@ -7,3 +7,4 @@ export PGDATA=/usr/local/var/postgres
 pg_ctl status >/dev/null || pg_ctl -l /usr/local/var/postgres/server.log start
 createuser ScrumBut || true
 createdb --owner=ScrumBut ScrumBut || true
+createdb --owner=ScrumBut ScrumBut_test || true
