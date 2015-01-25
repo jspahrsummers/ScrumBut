@@ -1,44 +1,142 @@
-Name:                ScrumBut
-Version:             0.1
-Synopsis:            Psuedo-Scrum using GitHub issues
-Description:         ScrumBut is a web app that implements some Scrum workflows on top of GitHub issues.
-License:             MIT
-License-file:        LICENSE.md
-Author:              Justin Spahr-Summers
-Maintainer:          Justin.SpahrSummers@gmail.com
-Copyright:           Copyright (c) 2015 Justin Spahr-Summers
-Stability:           Experimental
-Category:            Web
-Build-type:          Simple
-Cabal-version:       >=1.10
+name:              ScrumBut
+version:           0.1.0
+synopsis:          Psuedo-Scrum using GitHub issues
+description:       ScrumBut is a web app that implements some Scrum workflows on top of GitHub issues.
+license:           MIT
+license-file:      LICENSE.md
+author:            Justin Spahr-Summers
+maintainer:        Justin.SpahrSummers@gmail.com
+copyright:         Copyright (c) 2015 Justin Spahr-Summers
+stability:         Experimental
+category:          Web
+cabal-version:     >= 1.8
+build-type:        Simple
 
 Source-repository head
-  Type:     git
-  Location: https://github.com/jspahrsummers/ScrumBut
+    Type:     git
+    Location: https://github.com/jspahrsummers/ScrumBut
 
-Flag development
-  Description: Whether to build the server in development (interpreted) mode
-  Default: False
+Flag dev
+    Description:   Turn on development settings, like auto-reload templates.
+    Default:       False
 
-Flag old-base
-  default: False
-  manual: False
+Flag library-only
+    Description:   Build for use with "yesod devel"
+    Default:       False
 
-Executable ScrumBut
-  hs-source-dirs: src
-  main-is: Main.hs
-  default-language: Haskell2010
+library
+    hs-source-dirs: ., app
+    exposed-modules: Application
+                     Foundation
+                     Import
+                     Import.NoFoundation
+                     Model
+                     Settings
+                     Settings.StaticFiles
+                     Handler.Common
+                     Handler.Home
 
-  Build-depends:
-    base                      >= 4     && < 5,
-    bytestring                >= 0.9.1 && < 0.11,
-    MonadCatchIO-transformers >= 0.2.1 && < 0.4,
-    mtl                       >= 2     && < 3,
-    snap-core                 >= 0.9   && < 0.10,
-    snap-server               >= 0.9   && < 0.10
+    if flag(dev) || flag(library-only)
+        cpp-options:   -DDEVELOPMENT
+        ghc-options:   -Wall -fwarn-tabs -O0
+    else
+        ghc-options:   -Wall -fwarn-tabs -O2
 
-  if impl(ghc >= 6.12.0)
-    ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
-                 -fno-warn-unused-do-bind
-  else
-    ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
+    extensions: TemplateHaskell
+                QuasiQuotes
+                OverloadedStrings
+                NoImplicitPrelude
+                CPP
+                MultiParamTypeClasses
+                TypeFamilies
+                GADTs
+                GeneralizedNewtypeDeriving
+                FlexibleContexts
+                EmptyDataDecls
+                NoMonomorphismRestriction
+                DeriveDataTypeable
+                ViewPatterns
+                TupleSections
+                RecordWildCards
+
+    build-depends: base                          >= 4          && < 5
+                 , yesod                         >= 1.4.1      && < 1.5
+                 , yesod-core                    >= 1.4.6      && < 1.5
+                 , yesod-auth                    >= 1.4.0      && < 1.5
+                 , yesod-static                  >= 1.4.0.3    && < 1.5
+                 , yesod-form                    >= 1.4.0      && < 1.5
+                 , classy-prelude                >= 0.10.2
+                 , classy-prelude-conduit        >= 0.10.2
+                 , classy-prelude-yesod          >= 0.10.2
+                 , bytestring                    >= 0.9        && < 0.11
+                 , text                          >= 0.11       && < 2.0
+                 , persistent                    >= 2.0        && < 2.2
+                 , persistent-postgresql         >= 2.1.1      && < 2.2
+                 , persistent-template           >= 2.0        && < 2.2
+                 , template-haskell
+                 , shakespeare                   >= 2.0        && < 2.1
+                 , hjsmin                        >= 0.1        && < 0.2
+                 , monad-control                 >= 0.3        && < 0.4
+                 , wai-extra                     >= 3.0        && < 3.1
+                 , yaml                          >= 0.8        && < 0.9
+                 , http-conduit                  >= 2.1        && < 2.2
+                 , directory                     >= 1.1        && < 1.3
+                 , warp                          >= 3.0        && < 3.1
+                 , data-default
+                 , aeson                         >= 0.6        && < 0.9
+                 , conduit                       >= 1.0        && < 2.0
+                 , monad-logger                  >= 0.3        && < 0.4
+                 , fast-logger                   >= 2.2        && < 2.3
+                 , wai-logger                    >= 2.2        && < 2.3
+                 , file-embed
+                 , safe
+                 , unordered-containers
+                 , containers
+                 , vector
+                 , time
+
+executable         ScrumBut
+    if flag(library-only)
+        Buildable: False
+
+    main-is:           main.hs
+    hs-source-dirs:    app
+    build-depends:     base, ScrumBut
+
+    ghc-options:       -threaded -O2 -rtsopts -with-rtsopts=-N
+
+test-suite test
+    type:              exitcode-stdio-1.0
+    main-is:           Spec.hs
+    hs-source-dirs:    test
+    ghc-options:       -Wall
+
+    extensions: TemplateHaskell
+                QuasiQuotes
+                OverloadedStrings
+                NoImplicitPrelude
+                CPP
+                MultiParamTypeClasses
+                TypeFamilies
+                GADTs
+                GeneralizedNewtypeDeriving
+                FlexibleContexts
+                EmptyDataDecls
+                NoMonomorphismRestriction
+                DeriveDataTypeable
+                ViewPatterns
+                TupleSections
+
+    build-depends: base
+                 , ScrumBut
+                 , yesod-test >= 1.4.2 && < 1.5
+                 , yesod-core
+                 , yesod
+                 , persistent
+                 , persistent-postgresql
+                 , resourcet
+                 , monad-logger
+                 , transformers
+                 , hspec >= 2.0.0
+                 , classy-prelude
+                 , classy-prelude-yesod
