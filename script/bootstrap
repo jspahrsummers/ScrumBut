@@ -1,4 +1,10 @@
 #!/bin/bash
 
+set -e
+
+brew update
+brew install postgresql
+
 cabal update
-cabal install --only-dependencies --enable-tests
+cabal install -j alex happy yesod-bin
+cabal install -j --only-dependencies --enable-tests
