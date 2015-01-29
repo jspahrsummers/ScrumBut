@@ -21,7 +21,7 @@ newClient token = do
 -- Executes a GET request to the given relative path.
 fetchPath client path = do
     -- FIXME: fromJust
-    let req = fromJust $ parseUrl $ "https://api.github.com/" ++ path ++ "?access_token" ++ (unpack $ getToken client)
+    let req = fromJust $ parseUrl $ "https://api.github.com/" ++ path ++ "?access_token=" ++ (unpack $ getToken client)
         req' = req { requestHeaders = [ ("User-Agent", "ScrumBut") ] }
 
     httpLbs req'
