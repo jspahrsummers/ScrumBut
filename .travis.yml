@@ -2,7 +2,9 @@ language: haskell
 ghc: 7.8
 notifications:
   email: false
+  slack:
+    secure: dNE7nOHDxyrwcgPfcDJB6WZeoYCYx/ZGI4rOJsSxbxK//0uUjZ1ECwUW4wN0+sQkYUqm0xKku9ZUHFCVDr8R572srM+7cJ8vUcEy2m3cQ+aHkZF6mvbiyncEB/GbPQto8z9n5FwwHDOneBGvk/+nv0AM0hkShbAUQxNNxFFy5kE=
 before_install: cabal install -j alex happy
 before_script: script/setup
 addons:
-  postgresql: "9.3"
+  postgresql: '9.3'
