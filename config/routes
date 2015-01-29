@@ -4,4 +4,5 @@
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET
 
+/repositories RepositoriesR GET
 / HomeR GET
