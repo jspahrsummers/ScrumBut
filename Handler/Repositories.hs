@@ -16,7 +16,7 @@ getRepositoriesR = do
     let token = userToken $ fromJust user
     client <- newClient token
 
-    response <- responseBody <$> fetchPath client "repos"
+    response <- responseBody <$> fetchPath client "user/repos"
 
     let repos = (decode' response :: Maybe Value)
 
