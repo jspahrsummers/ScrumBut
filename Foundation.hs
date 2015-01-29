@@ -17,7 +17,7 @@ oauthGitHubClientSecret :: Text
 oauthGitHubClientSecret = "63d7f4d14f3b753f5e876ebbd809196ea2da5bfc"
 
 oauthGitHubScopes :: [Text]
-oauthGitHubScopes = [ "repo", "write:repo_hook" ]
+oauthGitHubScopes = [ "user:email", "repo", "write:repo_hook" ]
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
