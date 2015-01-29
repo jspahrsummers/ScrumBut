@@ -4,10 +4,20 @@ import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
-import Yesod.Auth.BrowserId (authBrowserId)
+import Yesod.Auth.OAuth2.Github (oauth2GithubScoped)
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
+
+-- FIXME: Move these to environment variables.
+oauthGitHubClientId :: Text
+oauthGitHubClientId = "a2c33a162b7765e93edb"
+
+oauthGitHubClientSecret :: Text
+oauthGitHubClientSecret = "63d7f4d14f3b753f5e876ebbd809196ea2da5bfc"
+
+oauthGitHubScopes :: [Text]
+oauthGitHubScopes = [ "repo", "write:repo_hook" ]
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -132,7 +142,9 @@ instance YesodAuth App where
                     }
 
     -- You can add other plugins like BrowserID, email or OAuth here
-    authPlugins _ = [authBrowserId def]
+    authPlugins _ =
+        [ oauth2GithubScoped oauthGitHubClientId oauthGitHubClientSecret oauthGitHubScopes
+        ]
 
     authHttpManager = getHttpManager
 
