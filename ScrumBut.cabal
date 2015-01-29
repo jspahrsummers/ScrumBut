@@ -28,6 +28,7 @@ library
     hs-source-dirs: ., app
     exposed-modules: Application
                      Foundation
+                     GitHub
                      Import
                      Import.NoFoundation
                      Model

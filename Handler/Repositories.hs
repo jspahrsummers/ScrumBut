@@ -5,6 +5,7 @@ module Handler.Repositories where
 import Import
 import Data.Aeson
 import Data.Maybe (fromJust)
+import GitHub
 import Network.HTTP.Conduit
 
 getRepositoriesR :: Handler Html
@@ -12,9 +13,10 @@ getRepositoriesR = do
     userId <- requireAuthId
     user <- runDB $ get userId
 
-    let token = unpack $ userToken $ fromJust user
+    let token = userToken $ fromJust user
+    client <- newClient token
 
-    response <- simpleHttp ("https://api.github.com/repos?access_token=" ++ token)
+    response <- responseBody <$> fetchPath client "repos"
 
     let repos = (decode' response :: Maybe Value)
 
