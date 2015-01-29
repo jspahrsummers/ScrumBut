@@ -2,6 +2,7 @@ module Foundation where
 
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
+import Data.Maybe           (fromJust)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
 import Yesod.Auth.OAuth2.Github (oauth2GithubScoped)
@@ -139,6 +140,8 @@ instance YesodAuth App where
                 fmap Just $ insert User
                     { userIdent = credsIdent creds
                     , userPassword = Nothing
+                    -- FIXME: Don't hardcode this key, don't force-unwrap
+                    , userToken = fromJust $ lookup "access_token" $ credsExtra creds
                     }
 
     -- You can add other plugins like BrowserID, email or OAuth here

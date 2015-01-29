@@ -1,6 +1,8 @@
 User
     ident Text
+    -- TODO: Delete this field & migrate
     password Text Maybe
+    token Text
     UniqueUser ident
     deriving Typeable
 Email
