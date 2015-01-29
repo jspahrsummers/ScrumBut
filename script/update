@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+cabal update
+cabal freeze --disable-tests --max-backjumps=-1
+cabal install -j --only-dependencies --enable-tests

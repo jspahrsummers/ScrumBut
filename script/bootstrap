@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+export SCRIPT_DIR=$(dirname "$0")
 
 brew update
 brew install postgresql
@@ -9,5 +10,4 @@ cabal update
 cabal install -j alex happy yesod-bin
 cabal install -j --only-dependencies --enable-tests
 
-export PGDATA=/usr/local/var/postgres
-pg_ctl status >/dev/null || pg_ctl -l /usr/local/var/postgres/server.log start
+. "$SCRIPT_DIR/startdb"

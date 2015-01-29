@@ -94,6 +94,7 @@ library
                  , containers
                  , vector
                  , time
+                 , yesod-auth-oauth2             >= 0.0.12     && < 0.1
 
 executable         ScrumBut
     if flag(library-only)

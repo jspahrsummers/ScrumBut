@@ -25,5 +25,5 @@ database:
   database: "_env:PGDATABASE:ScrumBut"
   poolsize: "_env:PGPOOLSIZE:10"
 
-copyright: Insert copyright statement here
+copyright: ""
 #analytics: UA-YOURCODE
