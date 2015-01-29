@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export PGDATA=/usr/local/var/postgres
+pg_ctl status >/dev/null || pg_ctl -l /usr/local/var/postgres/server.log start
