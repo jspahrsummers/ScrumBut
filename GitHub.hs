@@ -10,7 +10,6 @@ import Control.Monad.Trans.Resource
 import Data.Aeson
 import Data.Conduit
 import Data.Default
-import Data.Maybe (fromJust)
 import Network.HTTP.Conduit
 import Network.HTTP.Types
 
@@ -52,18 +51,18 @@ instance FromJSON Repository where
 -- Creates a GitHub client with the given OAuth token.
 newClient :: MonadIO m => Text -> m Client
 newClient token = do
-    manager <- liftIO newManager
+    manager <- liftIO $ newManager conduitManagerSettings
     return $ Client { getToken = token, getManager = manager }
 
 -- Executes a GET request to the given relative path.
-fetchPath :: MonadResource m => Client -> String -> m (Response (ResumableSource m ByteString))
+fetchPath :: MonadResource m => Client -> Text -> m (Response (ResumableSource m ByteString))
 fetchPath client path =
     let req = def
                 { method = methodGet
                 , secure = True
                 , host = "api.github.com"
-                , path = path
-                , queryString = "access_token=" ++ encodeUtf8 . getToken client
+                , path = encodeUtf8 path
+                , queryString = "access_token=" ++ encodeUtf8 (getToken client)
                 , requestHeaders = [ ("User-Agent", "ScrumBut") ]
                 }
-    in http req
+    in http req $ getManager client
