@@ -80,8 +80,8 @@ newClient token = do
     return $ Client { getToken = token, getManager = manager }
 
 -- Executes a GET request to the given relative path.
-fetchPath :: MonadResource m => Text -> Client -> m (Response (ResumableSource m ByteString))
-fetchPath path client =
+fetchPath :: MonadResource m => Client -> Text -> m (Response (ResumableSource m ByteString))
+fetchPath client path =
     let req = def
                 { method = methodGet
                 , secure = True
@@ -94,9 +94,9 @@ fetchPath path client =
     in http req $ getManager client
 
 -- Executes a GET request, and automatically deserializes the resulting JSON.
-fetchJSON :: (MonadResource m, FromJSON a) => Text -> Client -> m a
-fetchJSON path client = do
-    response <- fetchPath path client
+fetchJSON :: (MonadResource m, FromJSON a) => Client -> Text -> m a
+fetchJSON client path = do
+    response <- fetchPath client path
     value <- responseBody response $$+- sinkParser json
 
     case fromJSON value of
@@ -105,12 +105,12 @@ fetchJSON path client = do
 
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
-fetchRepos = fetchJSON "user/repos"
+fetchRepos client = fetchJSON client "user/repos"
 
 -- Fetches orgs that the current user is a member of.
 fetchOrgs :: MonadResource m => Client -> m [Organization]
-fetchOrgs = fetchJSON "user/orgs"
+fetchOrgs client = fetchJSON client "user/orgs"
 
 -- Fetches repositories in the given org.
-fetchOrgRepos :: MonadResource m => Organization -> Client -> m [Repository]
-fetchOrgRepos org = fetchJSON $ "orgs/" ++ orgLogin org ++ "/repos"
+fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
+fetchOrgRepos client org = fetchJSON client $ "orgs/" ++ orgLogin org ++ "/repos"

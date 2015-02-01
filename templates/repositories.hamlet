@@ -1,3 +1,7 @@
-<h1>Repositories:
+<h1>User
 
-#{show repos}
+#{show userRepos}
+
+<h1>Orgs
+
+#{show orgRepos}

@@ -11,7 +11,11 @@ getRepositoriesR = do
 
     let token = userToken $ fromJust user
     client <- newClient token
-    repos <- fetchRepos client
+
+    userRepos <- fetchRepos client
+
+    orgs <- fetchOrgs client
+    orgRepos <- concat <$> mapM (fetchOrgRepos client) orgs
 
     defaultLayout $ do
         setTitle "Welcome To Yesod!"
