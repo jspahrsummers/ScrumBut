@@ -1,6 +1,7 @@
 module GitHub ( Client
               , newClient
               , fetchPath
+              , fetchJSON
               , User(..)
               , Repository(..)
               ) where
@@ -9,6 +10,7 @@ import ClassyPrelude
 import Control.Monad.Trans.Resource
 import Data.Aeson
 import Data.Conduit
+import Data.Conduit.Attoparsec
 import Data.Default
 import Network.HTTP.Conduit
 import Network.HTTP.Types
@@ -66,3 +68,13 @@ fetchPath client path =
                 , requestHeaders = [ ("User-Agent", "ScrumBut") ]
                 }
     in http req $ getManager client
+
+-- Executes a GET request, and automatically deserializes the resulting JSON.
+fetchJSON :: (MonadResource m, FromJSON a) => Client -> Text -> m a
+fetchJSON client path = do
+    response <- fetchPath client path
+    value <- responseBody response $$+- sinkParser json
+
+    case fromJSON value of
+        Success a -> return a
+        Error str -> fail str
