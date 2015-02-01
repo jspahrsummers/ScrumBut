@@ -7,6 +7,7 @@ module GitHub ( Client
               , fetchRepos
               , Organization(..)
               , fetchOrgs
+              , fetchOrgRepos
               ) where
 
 import ClassyPrelude
@@ -109,3 +110,7 @@ fetchRepos = fetchJSON "user/repos"
 -- Fetches orgs that the current user is a member of.
 fetchOrgs :: MonadResource m => Client -> m [Organization]
 fetchOrgs = fetchJSON "user/orgs"
+
+-- Fetches repositories in the given org.
+fetchOrgRepos :: MonadResource m => Organization -> Client -> m [Repository]
+fetchOrgRepos org = fetchJSON $ "orgs/" ++ orgLogin org ++ "/repos"
