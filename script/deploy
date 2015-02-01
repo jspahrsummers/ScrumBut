@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+export SCRIPT_DIR=$(dirname "$0")
+
+branch=$(git symbolic-ref --short HEAD)
+git push "$@" heroku "$branch:master"
+
+heroku open
