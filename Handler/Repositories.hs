@@ -1,8 +1,6 @@
 module Handler.Repositories where
 
 import Import
-import Data.Aeson
-import Data.Conduit.Attoparsec
 import Data.Maybe (fromJust)
 import GitHub
 
@@ -13,9 +11,7 @@ getRepositoriesR = do
 
     let token = userToken $ fromJust user
     client <- newClient token
-
-    response <- fetchPath client "user/repos"
-    repos <- responseBody response $$+- sinkParser json
+    repos <- fetchRepos client
 
     defaultLayout $ do
         setTitle "Welcome To Yesod!"

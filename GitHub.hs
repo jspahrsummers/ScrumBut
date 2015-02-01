@@ -2,6 +2,7 @@ module GitHub ( Client
               , newClient
               , fetchPath
               , fetchJSON
+              , fetchRepos
               , User(..)
               , Repository(..)
               ) where
@@ -57,8 +58,8 @@ newClient token = do
     return $ Client { getToken = token, getManager = manager }
 
 -- Executes a GET request to the given relative path.
-fetchPath :: MonadResource m => Client -> Text -> m (Response (ResumableSource m ByteString))
-fetchPath client path =
+fetchPath :: MonadResource m => Text -> Client -> m (Response (ResumableSource m ByteString))
+fetchPath path client =
     let req = def
                 { method = methodGet
                 , secure = True
@@ -70,11 +71,15 @@ fetchPath client path =
     in http req $ getManager client
 
 -- Executes a GET request, and automatically deserializes the resulting JSON.
-fetchJSON :: (MonadResource m, FromJSON a) => Client -> Text -> m a
-fetchJSON client path = do
-    response <- fetchPath client path
+fetchJSON :: (MonadResource m, FromJSON a) => Text -> Client -> m a
+fetchJSON path client = do
+    response <- fetchPath path client
     value <- responseBody response $$+- sinkParser json
 
     case fromJSON value of
         Success a -> return a
         Error str -> fail str
+
+-- Fetches repositories of the current user.
+fetchRepos :: MonadResource m => Client -> m [Repository]
+fetchRepos = fetchJSON "user/repos"
