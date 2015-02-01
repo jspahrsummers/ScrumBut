@@ -2,9 +2,11 @@ module GitHub ( Client
               , newClient
               , fetchPath
               , fetchJSON
-              , fetchRepos
               , User(..)
               , Repository(..)
+              , fetchRepos
+              , Organization(..)
+              , fetchOrgs
               ) where
 
 import ClassyPrelude
@@ -24,12 +26,18 @@ data Client = Client
 data User = User
     { userId :: Integer
     , userLogin :: Text
+    , userAvatarUrl :: String
+    , userName :: Maybe Text
+    , userHtmlUrl :: String
     } deriving (Eq, Show)
 
 instance FromJSON User where
     parseJSON (Object v) = User <$>
                             v .: "id" <*>
-                            v .: "login"
+                            v .: "login" <*>
+                            v .: "avatar_url" <*>
+                            v .:? "name" <*>
+                            v .: "html_url"
     parseJSON _ = mzero
 
 data Repository = Repository
@@ -49,6 +57,19 @@ instance FromJSON Repository where
                             v .:? "description" .!= "" <*>
                             v .: "url" <*>
                             v .: "html_url"
+    parseJSON _ = mzero
+
+data Organization = Organization
+    { orgId :: Integer
+    , orgLogin :: Text
+    , orgDescription :: Text
+    } deriving (Eq, Show)
+
+instance FromJSON Organization where
+    parseJSON (Object v) = Organization <$>
+                            v .: "id" <*>
+                            v .: "login" <*>
+                            v .:? "description" .!= ""
     parseJSON _ = mzero
 
 -- Creates a GitHub client with the given OAuth token.
@@ -84,3 +105,7 @@ fetchJSON path client = do
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
 fetchRepos = fetchJSON "user/repos"
+
+-- Fetches orgs that the current user is a member of.
+fetchOrgs :: MonadResource m => Client -> m [Organization]
+fetchOrgs = fetchJSON "user/orgs"
