@@ -64,6 +64,7 @@ fetchPath path client =
                 { method = methodGet
                 , secure = True
                 , host = "api.github.com"
+                , port = 443
                 , path = encodeUtf8 path
                 , queryString = "access_token=" ++ encodeUtf8 (getToken client)
                 , requestHeaders = [ ("User-Agent", "ScrumBut") ]
