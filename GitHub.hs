@@ -13,14 +13,14 @@ module GitHub ( Client
               , Organization(..)
               , fetchOrgs
               , fetchOrgRepos
+              , MilestoneFilter(..)
+              , StateFilter(..)
               , IssueState(..)
               , Issue(..)
               , fetchIssues
-              , fetchIssuesInMilestone
               , MilestoneState(..)
               , Milestone(..)
               , fetchMilestones
-              , fetchMilestonesInState
               ) where
 
 import ClassyPrelude
@@ -244,33 +244,36 @@ fetchOrgs client = fetchJSON $ request client "user/orgs"
 fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
 fetchOrgRepos client org = fetchJSON $ request client $ "orgs/" ++ orgLogin org ++ "/repos"
 
+data MilestoneFilter
+    = AllMilestones
+    | OnlyMilestone Milestone
+    | NoMilestones
+    deriving Eq
+
+instance Show MilestoneFilter where
+    show AllMilestones = "milestone=*"
+    show (OnlyMilestone m) = "milestone=" ++ (show $ milestoneId m)
+    show NoMilestones = "milestone=none"
+
+data StateFilter
+    = OnlyOpen
+    | OnlyClosed
+    | AllStates
+    deriving Eq
+
+instance Show StateFilter where
+    show OnlyOpen = "state=open"
+    show OnlyClosed = "state=closed"
+    show AllStates = "state=all"
+
 -- Fetches issues in the given repository.
-fetchIssues :: MonadResource m => Client -> Repository -> m [Issue]
-fetchIssues client repo = fetchJSON $ request client $ repoRelativePath repo "issues"
-
--- Fetches issues in the given repository and milestone.
-fetchIssuesInMilestone :: MonadResource m => Client -> Repository -> Maybe Milestone -> m [Issue]
-fetchIssuesInMilestone client repo milestone =
-    let value = case milestone of
-                (Just m) -> pack $ show $ milestoneId m
-                Nothing -> "none"
-
-        req = request client $ repoRelativePath repo "issues"
-    -- TODO: Factor out commonalities.
-    in fetchJSON $ req { parameters = [ "milestone=" ++ value ] }
+fetchIssues :: MonadResource m => Client -> Repository -> StateFilter -> MilestoneFilter -> m [Issue]
+fetchIssues client repo state milestone =
+    let req = request client $ repoRelativePath repo "issues"
+    in fetchJSON $ req { parameters = [ pack $ show milestone, pack $ show state ] }
 
 -- Fetches milestones in the given repository.
-fetchMilestones :: MonadResource m => Client -> Repository -> m [Milestone]
-fetchMilestones client repo = fetchJSON $ request client $ repoRelativePath repo "milestones"
-
--- Fetches milestones in the given repository that have the specified state.
-fetchMilestonesInState :: MonadResource m => Client -> Repository -> Maybe MilestoneState -> m [Milestone]
-fetchMilestonesInState client repo state =
-    let value = case state of
-                (Just MilestoneOpen) -> "open"
-                (Just MilestoneClosed) -> "closed"
-                Nothing -> "all"
-
-        req = request client $ repoRelativePath repo "milestones"
-    -- TODO: Factor out commonalities.
-    in fetchJSON $ req { parameters = [ "state=" ++ value ] }
+fetchMilestones :: MonadResource m => Client -> Repository -> StateFilter -> m [Milestone]
+fetchMilestones client repo state =
+    let req = request client $ repoRelativePath repo "milestones"
+    in fetchJSON $ req { parameters = [ pack $ show state ] }
