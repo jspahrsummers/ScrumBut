@@ -2,6 +2,7 @@ module Foundation where
 
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
+import Data.Maybe           (fromJust)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
 import Yesod.Auth.OAuth2.Github (oauth2GithubScoped)
@@ -9,15 +10,9 @@ import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 
--- FIXME: Move these to environment variables.
-oauthGitHubClientId :: Text
-oauthGitHubClientId = "a2c33a162b7765e93edb"
-
-oauthGitHubClientSecret :: Text
-oauthGitHubClientSecret = "63d7f4d14f3b753f5e876ebbd809196ea2da5bfc"
-
+-- The OAuth scopes to use when authenicating with GitHub.
 oauthGitHubScopes :: [Text]
-oauthGitHubScopes = [ "user:email", "repo", "write:repo_hook" ]
+oauthGitHubScopes = [ "user:email", "read:org", "repo" ]
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -133,18 +128,26 @@ instance YesodAuth App where
 
     getAuthId creds = runDB $ do
         x <- getBy $ UniqueUser $ credsIdent creds
+
+        -- FIXME: Don't hardcode this key, don't force-unwrap
+        let token = fromJust $ lookup "access_token" $ credsExtra creds
+
         case x of
-            Just (Entity uid _) -> return $ Just uid
-            Nothing -> do
+            Just (Entity uid _) ->
+                Just uid <$ update uid [ UserToken =. token ]
+            Nothing ->
                 fmap Just $ insert User
                     { userIdent = credsIdent creds
                     , userPassword = Nothing
+                    , userToken = token
                     }
 
     -- You can add other plugins like BrowserID, email or OAuth here
-    authPlugins _ =
-        [ oauth2GithubScoped oauthGitHubClientId oauthGitHubClientSecret oauthGitHubScopes
-        ]
+    authPlugins master =
+        let settings = appSettings master
+            githubId = appGitHubId settings
+            githubSecret = appGitHubSecret settings
+        in [ oauth2GithubScoped githubId githubSecret oauthGitHubScopes ]
 
     authHttpManager = getHttpManager
 
