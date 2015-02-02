@@ -5,6 +5,7 @@ module GitHub ( Client
               , User(..)
               , Repository(..)
               , fetchRepos
+              , repoNWO
               , Organization(..)
               , fetchOrgs
               , fetchOrgRepos
@@ -59,6 +60,12 @@ instance FromJSON Repository where
                             v .: "url" <*>
                             v .: "html_url"
     parseJSON _ = mzero
+
+-- The fully qualified name of a repository.
+repoNWO :: Repository -> Text
+repoNWO repo =
+    let ownerLogin = userLogin $ repoOwner repo
+    in ownerLogin ++ "/" ++ repoName repo
 
 data Organization = Organization
     { orgId :: Integer

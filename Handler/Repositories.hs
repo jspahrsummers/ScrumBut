@@ -4,6 +4,9 @@ import Import
 import Data.Maybe (fromJust)
 import GitHub
 
+_repository :: Repository -> Widget
+_repository repo = $(widgetFile "_repository")
+
 getRepositoriesR :: Handler Html
 getRepositoriesR = do
     userId <- requireAuthId

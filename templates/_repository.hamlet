@@ -1,0 +1,4 @@
+<li>
+    <strong>
+        <a href=#{repoHtmlUrl repo}>#{repoNWO repo}
+    #{repoDescription repo}

@@ -1,7 +1,9 @@
 <h1>User
 
-#{show userRepos}
+$forall repo <- userRepos
+    ^{_repository repo}
 
 <h1>Orgs
 
-#{show orgRepos}
+$forall repo <- orgRepos
+    ^{_repository repo}
