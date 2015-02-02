@@ -27,3 +27,7 @@ database:
 
 copyright: ""
 #analytics: UA-YOURCODE
+
+# OAuth settings for GitHub, defaulting to the "ScrumBut (staging)" application.
+github-client-id: "_env:GITHUB_CLIENT_ID:3d4667bd36b0de1bdd14"
+github-client-secret: "_env:GITHUB_CLIENT_SECRET:febd75e7c324391c116bb3665ceea19f473dbdef"

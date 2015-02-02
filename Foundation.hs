@@ -10,13 +10,7 @@ import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 
--- FIXME: Move these to environment variables.
-oauthGitHubClientId :: Text
-oauthGitHubClientId = "a2c33a162b7765e93edb"
-
-oauthGitHubClientSecret :: Text
-oauthGitHubClientSecret = "63d7f4d14f3b753f5e876ebbd809196ea2da5bfc"
-
+-- The OAuth scopes to use when authenicating with GitHub.
 oauthGitHubScopes :: [Text]
 oauthGitHubScopes = [ "user:email", "read:org", "repo" ]
 
@@ -145,9 +139,11 @@ instance YesodAuth App where
                     }
 
     -- You can add other plugins like BrowserID, email or OAuth here
-    authPlugins _ =
-        [ oauth2GithubScoped oauthGitHubClientId oauthGitHubClientSecret oauthGitHubScopes
-        ]
+    authPlugins master =
+        let settings = appSettings master
+            githubId = appGitHubId settings
+            githubSecret = appGitHubSecret settings
+        in [ oauth2GithubScoped githubId githubSecret oauthGitHubScopes ]
 
     authHttpManager = getHttpManager
 
