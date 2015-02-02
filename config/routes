@@ -6,3 +6,4 @@
 
 / HomeR GET
 /repos/#Text/#Text RepoR GET
+/repos/#Text/#Text/milestones/#Integer MilestoneR GET

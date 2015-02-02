@@ -1,0 +1,7 @@
+<h1>#{GH.milestoneTitle milestone}
+<p>#{GH.milestoneDescription milestone}
+
+<ol>
+    $forall issue <- issues
+        <li value=#{GH.issueNumber issue}>
+            <a href=#{GH.issueHtmlUrl issue}>#{GH.issueTitle issue}

@@ -37,6 +37,7 @@ library
                      Handler.Common
                      Handler.Home
                      Handler.Repo
+                     Handler.Milestone
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
