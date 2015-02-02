@@ -1,4 +1,4 @@
 <li>
     <strong>
-        <a href=#{repoHtmlUrl repo}>#{repoNWO repo}
-    #{repoDescription repo}
+        <a href=#{GH.repoHtmlUrl repo}>#{GH.repoNWO repo}
+    #{GH.repoDescription repo}

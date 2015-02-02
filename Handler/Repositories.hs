@@ -2,9 +2,9 @@ module Handler.Repositories where
 
 import Import
 import Data.Maybe (fromJust)
-import GitHub
+import qualified GitHub as GH
 
-_repository :: Repository -> Widget
+_repository :: GH.Repository -> Widget
 _repository repo = $(widgetFile "_repository")
 
 getRepositoriesR :: Handler Html
@@ -13,12 +13,12 @@ getRepositoriesR = do
     user <- runDB $ get userId
 
     let token = userToken $ fromJust user
-    client <- newClient token
+    client <- GH.newClient token
 
-    userRepos <- fetchRepos client
+    userRepos <- GH.fetchRepos client
 
-    orgs <- fetchOrgs client
-    orgRepos <- concat <$> mapM (fetchOrgRepos client) orgs
+    orgs <- GH.fetchOrgs client
+    orgRepos <- concat <$> mapM (GH.fetchOrgRepos client) orgs
 
     defaultLayout $ do
         setTitle "Welcome To Yesod!"
