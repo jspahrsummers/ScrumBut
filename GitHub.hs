@@ -88,8 +88,10 @@ fetchPath client path =
                 , host = "api.github.com"
                 , port = 443
                 , path = encodeUtf8 path
-                , queryString = "access_token=" ++ encodeUtf8 (getToken client)
-                , requestHeaders = [ ("User-Agent", "ScrumBut") ]
+                , requestHeaders =
+                    [ ("User-Agent", "ScrumBut")
+                    , ("Authorization", "token " ++ encodeUtf8 (getToken client))
+                    ]
                 }
     in http req $ getManager client
 
