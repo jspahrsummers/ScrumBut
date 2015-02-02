@@ -20,6 +20,7 @@ module GitHub ( Client
               , fetchIssues
               , MilestoneState(..)
               , Milestone(..)
+              , fetchMilestone
               , fetchMilestones
               ) where
 
@@ -271,6 +272,10 @@ fetchIssues :: MonadResource m => Client -> Repository -> StateFilter -> Milesto
 fetchIssues client repo state milestone =
     let req = request client $ repoRelativePath repo "issues"
     in fetchJSON $ req { parameters = [ pack $ show milestone, pack $ show state ] }
+
+-- Fetches a single milestone from a repository.
+fetchMilestone :: MonadResource m => Client -> Repository -> Integer -> m Milestone
+fetchMilestone client repo milestoneId = fetchJSON $ request client $ repoRelativePath repo $ "milestones/" ++ pack (show milestoneId)
 
 -- Fetches milestones in the given repository.
 fetchMilestones :: MonadResource m => Client -> Repository -> StateFilter -> m [Milestone]
