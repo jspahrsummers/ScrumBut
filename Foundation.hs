@@ -128,14 +128,18 @@ instance YesodAuth App where
 
     getAuthId creds = runDB $ do
         x <- getBy $ UniqueUser $ credsIdent creds
+
+        -- FIXME: Don't hardcode this key, don't force-unwrap
+        let token = fromJust $ lookup "access_token" $ credsExtra creds
+
         case x of
-            Just (Entity uid _) -> return $ Just uid
-            Nothing -> do
+            Just (Entity uid _) ->
+                Just uid <$ update uid [ UserToken =. token ]
+            Nothing ->
                 fmap Just $ insert User
                     { userIdent = credsIdent creds
                     , userPassword = Nothing
-                    -- FIXME: Don't hardcode this key, don't force-unwrap
-                    , userToken = fromJust $ lookup "access_token" $ credsExtra creds
+                    , userToken = token
                     }
 
     -- You can add other plugins like BrowserID, email or OAuth here
