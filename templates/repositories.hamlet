@@ -1,3 +1,7 @@
+<p>
+    Signed in as: #{show userId}
+    <a href=@{AuthR LogoutR}>Sign out
+
 <h1>User
 
 $forall repo <- sort userRepos
