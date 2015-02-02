@@ -21,5 +21,5 @@ getRepositoriesR = do
     orgRepos <- concat <$> mapM (GH.fetchOrgRepos client) orgs
 
     defaultLayout $ do
-        setTitle "Welcome To Yesod!"
+        setTitle "Repositories"
         $(widgetFile "repositories")

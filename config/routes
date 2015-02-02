@@ -6,3 +6,4 @@
 
 /repositories RepositoriesR GET
 / HomeR GET
+/repo/#Text/#Text RepoR GET

@@ -5,6 +5,7 @@ module GitHub ( Client
               , User(..)
               , Repository(..)
               , fetchRepos
+              , fetchRepo
               , repoNWO
               , Organization(..)
               , fetchOrgs
@@ -186,6 +187,10 @@ fetchJSON client path = do
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
 fetchRepos client = fetchJSON client "user/repos"
+
+-- Fetches a repository by NWO.
+fetchRepo :: MonadResource m => Client -> Text -> Text -> m Repository
+fetchRepo client ownerLogin name = fetchJSON client $ "repos/" ++ ownerLogin ++ "/" ++ name
 
 -- Fetches orgs that the current user is a member of.
 fetchOrgs :: MonadResource m => Client -> m [Organization]

@@ -37,6 +37,7 @@ library
                      Handler.Common
                      Handler.Home
                      Handler.Repositories
+                     Handler.Repo
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

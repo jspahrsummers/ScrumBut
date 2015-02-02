@@ -14,5 +14,5 @@ getHomeR = do
     maid <- maybeAuthId
     defaultLayout $ do
         aDomId <- newIdent
-        setTitle "Welcome To Yesod!"
+        setTitle "ScrumBut"
         $(widgetFile "homepage")
