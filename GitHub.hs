@@ -159,14 +159,15 @@ newClient token = do
     return $ Client { getToken = token, getManager = manager }
 
 -- Executes a GET request to the given relative path.
-fetchPath :: MonadResource m => Client -> Text -> m (Response (ResumableSource m ByteString))
-fetchPath client path =
+fetchPath :: MonadResource m => Client -> Text -> [Text] -> m (Response (ResumableSource m ByteString))
+fetchPath client path args =
     let req = def
                 { method = methodGet
                 , secure = True
                 , host = "api.github.com"
                 , port = 443
                 , path = encodeUtf8 path
+                , queryString = encodeUtf8 $ intercalate "&" $ "per_page=100" : args
                 , requestHeaders =
                     [ ("User-Agent", "ScrumBut")
                     , ("Authorization", "token " ++ encodeUtf8 (getToken client))
@@ -175,9 +176,9 @@ fetchPath client path =
     in http req $ getManager client
 
 -- Executes a GET request, and automatically deserializes the resulting JSON.
-fetchJSON :: (MonadResource m, FromJSON a) => Client -> Text -> m a
-fetchJSON client path = do
-    response <- fetchPath client path
+fetchJSON :: (MonadResource m, FromJSON a) => Client -> Text -> [Text] -> m a
+fetchJSON client path args = do
+    response <- fetchPath client path args
     value <- responseBody response $$+- sinkParser json
 
     case fromJSON value of
@@ -186,20 +187,20 @@ fetchJSON client path = do
 
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
-fetchRepos client = fetchJSON client "user/repos"
+fetchRepos client = fetchJSON client "user/repos" []
 
 -- Fetches a repository by NWO.
 fetchRepo :: MonadResource m => Client -> Text -> Text -> m Repository
-fetchRepo client ownerLogin name = fetchJSON client $ "repos/" ++ ownerLogin ++ "/" ++ name
+fetchRepo client ownerLogin name = fetchJSON client ("repos/" ++ ownerLogin ++ "/" ++ name) []
 
 -- Fetches orgs that the current user is a member of.
 fetchOrgs :: MonadResource m => Client -> m [Organization]
-fetchOrgs client = fetchJSON client "user/orgs"
+fetchOrgs client = fetchJSON client "user/orgs" []
 
 -- Fetches repositories in the given org.
 fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
-fetchOrgRepos client org = fetchJSON client $ "orgs/" ++ orgLogin org ++ "/repos"
+fetchOrgRepos client org = fetchJSON client ("orgs/" ++ orgLogin org ++ "/repos") []
 
 -- Fetches milestones in the given repository.
 fetchMilestones :: MonadResource m => Client -> Repository -> m [Milestone]
-fetchMilestones client repo = fetchJSON client $ "repos/" ++ repoNWO repo ++ "/milestones"
+fetchMilestones client repo = fetchJSON client ("repos/" ++ repoNWO repo ++ "/milestones") []
