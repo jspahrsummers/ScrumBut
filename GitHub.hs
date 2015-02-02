@@ -48,7 +48,7 @@ instance FromJSON User where
     parseJSON _ = mzero
 
 instance Ord User where
-    compare a b = compare (toCaseFold $ userLogin a) (toCaseFold $ userLogin b)
+    compare = compare `on` toCaseFold . userLogin
 
 data Repository = Repository
     { repoId :: Integer
@@ -70,7 +70,7 @@ instance FromJSON Repository where
     parseJSON _ = mzero
 
 instance Ord Repository where
-    compare a b = compare (toCaseFold $ repoNWO a) (toCaseFold $ repoNWO b)
+    compare = compare `on` toCaseFold . repoNWO
 
 data Organization = Organization
     { orgId :: Integer
@@ -86,7 +86,7 @@ instance FromJSON Organization where
     parseJSON _ = mzero
 
 instance Ord Organization where
-    compare a b = compare (toCaseFold $ orgLogin a) (toCaseFold $ orgLogin b)
+    compare = compare `on` toCaseFold . orgLogin
 
 data IssueState = IssueOpen | IssueClosed
     deriving (Eq, Show, Ord)
@@ -124,7 +124,7 @@ instance FromJSON Issue where
     parseJSON _ = mzero
 
 instance Ord Issue where
-    compare a b = compare (issueNumber a) (issueNumber b)
+    compare = compare `on` issueNumber
 
 data Milestone = Milestone
     { milestoneId :: Integer
@@ -144,7 +144,7 @@ instance FromJSON Milestone where
     parseJSON _ = mzero
 
 instance Ord Milestone where
-    compare a b = compare (toCaseFold $ milestoneTitle a) (toCaseFold $ milestoneTitle b)
+    compare = compare `on` toCaseFold . milestoneTitle
 
 -- The fully qualified name of a repository.
 repoNWO :: Repository -> Text
