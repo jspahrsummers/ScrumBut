@@ -12,6 +12,8 @@ module GitHub ( Client
               , fetchOrgRepos
               , IssueState(..)
               , Issue(..)
+              , fetchIssues
+              , fetchIssuesInMilestone
               , MilestoneState(..)
               , Milestone(..)
               , fetchMilestones
@@ -197,6 +199,10 @@ fetchJSON client path args = do
         Success a -> return a
         Error str -> fail str
 
+-- Creates a path relative to the repos/ namespace.
+repoRelativePath :: Repository -> Text -> Text
+repoRelativePath repo subpath = "repos/" ++ repoNWO repo ++ "/" ++ subpath
+
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
 fetchRepos client = fetchJSON client "user/repos" []
@@ -213,9 +219,22 @@ fetchOrgs client = fetchJSON client "user/orgs" []
 fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
 fetchOrgRepos client org = fetchJSON client ("orgs/" ++ orgLogin org ++ "/repos") []
 
+-- Fetches issues in the given repository.
+fetchIssues :: MonadResource m => Client -> Repository -> m [Issue]
+fetchIssues client repo = fetchJSON client (repoRelativePath repo "issues") []
+
+-- Fetches issues in the given repository and milestone.
+fetchIssuesInMilestone :: MonadResource m => Client -> Repository -> Maybe Milestone -> m [Issue]
+fetchIssuesInMilestone client repo milestone =
+    let value = case milestone of
+                (Just m) -> pack $ show $ milestoneId m
+                Nothing -> "none"
+    -- TODO: Factor out commonalities.
+    in fetchJSON client (repoRelativePath repo "issues") [ "milestone=" ++ value ]
+
 -- Fetches milestones in the given repository.
 fetchMilestones :: MonadResource m => Client -> Repository -> m [Milestone]
-fetchMilestones client repo = fetchJSON client ("repos/" ++ repoNWO repo ++ "/milestones") []
+fetchMilestones client repo = fetchJSON client (repoRelativePath repo "milestones") []
 
 -- Fetches milestones in the given repository that have the specified state.
 fetchMilestonesInState :: MonadResource m => Client -> Repository -> Maybe MilestoneState -> m [Milestone]
@@ -225,4 +244,4 @@ fetchMilestonesInState client repo state =
                 (Just MilestoneClosed) -> "closed"
                 Nothing -> "all"
     -- TODO: Factor out commonalities.
-    in fetchJSON client ("repos/" ++ repoNWO repo ++ "/milestones") [ "state=" ++ value ]
+    in fetchJSON client (repoRelativePath repo "milestones") [ "state=" ++ value ]
