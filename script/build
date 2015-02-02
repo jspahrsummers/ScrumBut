@@ -4,4 +4,4 @@
 
 set -e
 
-cabal build -j
+yesod build

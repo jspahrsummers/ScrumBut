@@ -4,4 +4,4 @@
 
 set -e
 
-cabal test -j
+yesod test
