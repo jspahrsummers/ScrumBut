@@ -1,5 +1,7 @@
 #!/bin/bash
+#
+# Builds and runs the project's test suite.
 
 set -e
 
-cabal test -j
+yesod test

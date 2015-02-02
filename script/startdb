@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Starts up a local database server, if not already running.
 
 export PGDATA=/usr/local/var/postgres
 pg_ctl status >/dev/null || pg_ctl -l /usr/local/var/postgres/server.log start

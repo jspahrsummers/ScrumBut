@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Starts up a development server on the local machine.
 
 set -e
 export SCRIPT_DIR=$(dirname "$0")

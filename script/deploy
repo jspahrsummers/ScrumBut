@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Deploys the current branch to Heroku. Any arguments (like --force) are passed
+# through to `git push` unmodified.
 
 set -e
 export SCRIPT_DIR=$(dirname "$0")

@@ -1,0 +1,4 @@
+<li>
+    <strong>
+        <a href=@{RepoR (GH.userLogin $ GH.repoOwner repo) (GH.repoName repo)}>#{GH.repoNWO repo}
+    #{GH.repoDescription repo}

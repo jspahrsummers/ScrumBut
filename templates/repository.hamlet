@@ -1,0 +1,6 @@
+<h1>#{GH.repoNWO repo}
+
+<ul>
+    $forall milestone <- milestones
+        <li>
+            <a href=@{MilestoneR (GH.userLogin $ GH.repoOwner repo) (GH.repoName repo) (GH.milestoneId milestone)}>#{GH.milestoneTitle milestone}

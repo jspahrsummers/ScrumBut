@@ -1,18 +1,32 @@
 module Handler.Home where
 
+import Data.Maybe (fromJust)
 import Import
+import qualified GitHub as GH
 
--- This is a handler function for the GET request method on the HomeR
--- resource pattern. All of your resource patterns are defined in
--- config/routes
---
--- The majority of the code you will write in Yesod lives in these handler
--- functions. You can spread them across multiple files if you are so
--- inclined, or create a single monolithic file.
 getHomeR :: Handler Html
-getHomeR = do
-    maid <- maybeAuthId
+getHomeR = maybeAuthId >>= homeHandler
+
+_repository :: GH.Repository -> Widget
+_repository repo = $(widgetFile "_repository")
+
+homeHandler :: Maybe UserId -> Handler Html
+homeHandler Nothing =
     defaultLayout $ do
-        aDomId <- newIdent
-        setTitle "Welcome To Yesod!"
-        $(widgetFile "homepage")
+        setTitle "ScrumBut | Sign in"
+        $(widgetFile "sign_in")
+
+homeHandler (Just userId) = do
+    user <- runDB $ get userId
+
+    let token = userToken $ fromJust user
+    client <- GH.newClient token
+
+    userRepos <- GH.fetchRepos client
+
+    orgs <- GH.fetchOrgs client
+    orgRepos <- concat <$> mapM (GH.fetchOrgRepos client) orgs
+
+    defaultLayout $ do
+        setTitle "ScrumBut | Repositories"
+        $(widgetFile "repositories")

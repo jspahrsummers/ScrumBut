@@ -1,0 +1,6 @@
+<h1>ScrumBut
+
+<p>
+    Please
+    <a href=@{AuthR LoginR}>sign in
+    to continue.
