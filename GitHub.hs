@@ -12,8 +12,10 @@ module GitHub ( Client
               , fetchOrgRepos
               , IssueState(..)
               , Issue(..)
+              , MilestoneState(..)
               , Milestone(..)
               , fetchMilestones
+              , fetchMilestonesInState
               ) where
 
 import ClassyPrelude
@@ -126,12 +128,21 @@ instance FromJSON Issue where
 instance Ord Issue where
     compare = compare `on` issueNumber
 
+data MilestoneState = MilestoneOpen | MilestoneClosed
+    deriving (Eq, Show, Ord)
+
+instance FromJSON MilestoneState where
+    parseJSON (String "open") = return MilestoneOpen
+    parseJSON (String "closed") = return MilestoneClosed
+    parseJSON _ = mzero
+
 data Milestone = Milestone
     { milestoneId :: Integer
     , milestoneTitle :: Text
     , milestoneDescription :: Text
     , milestoneApiUrl :: String
     , milestoneCreator :: User
+    , milestoneState :: MilestoneState
     } deriving (Eq, Show)
 
 instance FromJSON Milestone where
@@ -140,7 +151,8 @@ instance FromJSON Milestone where
                             v .: "title" <*>
                             v .:? "description" .!= "" <*>
                             v .: "url" <*>
-                            v .: "creator"
+                            v .: "creator" <*>
+                            v .: "state"
     parseJSON _ = mzero
 
 instance Ord Milestone where
@@ -204,3 +216,13 @@ fetchOrgRepos client org = fetchJSON client ("orgs/" ++ orgLogin org ++ "/repos"
 -- Fetches milestones in the given repository.
 fetchMilestones :: MonadResource m => Client -> Repository -> m [Milestone]
 fetchMilestones client repo = fetchJSON client ("repos/" ++ repoNWO repo ++ "/milestones") []
+
+-- Fetches milestones in the given repository that have the specified state.
+fetchMilestonesInState :: MonadResource m => Client -> Repository -> Maybe MilestoneState -> m [Milestone]
+fetchMilestonesInState client repo state =
+    let value = case state of
+                (Just MilestoneOpen) -> "open"
+                (Just MilestoneClosed) -> "closed"
+                Nothing -> "all"
+    -- TODO: Factor out commonalities.
+    in fetchJSON client ("repos/" ++ repoNWO repo ++ "/milestones") [ "state=" ++ value ]

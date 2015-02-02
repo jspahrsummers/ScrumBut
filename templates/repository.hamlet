@@ -1,4 +1,5 @@
 <h1>#{GH.repoNWO repo}
 
-$forall milestone <- milestones
-    #{GH.milestoneTitle milestone}
+<ul>
+    $forall milestone <- milestones
+        <li>#{GH.milestoneTitle milestone}

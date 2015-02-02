@@ -14,7 +14,7 @@ getRepoR ownerLogin name = do
     client <- GH.newClient token
 
     repo <- GH.fetchRepo client ownerLogin name
-    milestones <- GH.fetchMilestones client repo
+    milestones <- GH.fetchMilestonesInState client repo Nothing
 
     defaultLayout $ do
         setTitle "Milestones"
