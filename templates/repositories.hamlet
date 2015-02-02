@@ -1,9 +1,9 @@
 <h1>User
 
-$forall repo <- userRepos
+$forall repo <- sort userRepos
     ^{_repository repo}
 
 <h1>Orgs
 
-$forall repo <- orgRepos
+$forall repo <- sort orgRepos
     ^{_repository repo}

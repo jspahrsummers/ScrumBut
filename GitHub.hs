@@ -42,6 +42,9 @@ instance FromJSON User where
                             v .: "html_url"
     parseJSON _ = mzero
 
+instance Ord User where
+    compare a b = compare (toCaseFold $ userLogin a) (toCaseFold $ userLogin b)
+
 data Repository = Repository
     { repoId :: Integer
     , repoOwner :: User
@@ -61,6 +64,9 @@ instance FromJSON Repository where
                             v .: "html_url"
     parseJSON _ = mzero
 
+instance Ord Repository where
+    compare a b = compare (toCaseFold $ repoNWO a) (toCaseFold $ repoNWO b)
+
 -- The fully qualified name of a repository.
 repoNWO :: Repository -> Text
 repoNWO repo =
@@ -79,6 +85,9 @@ instance FromJSON Organization where
                             v .: "login" <*>
                             v .:? "description" .!= ""
     parseJSON _ = mzero
+
+instance Ord Organization where
+    compare a b = compare (toCaseFold $ orgLogin a) (toCaseFold $ orgLogin b)
 
 -- Creates a GitHub client with the given OAuth token.
 newClient :: MonadIO m => Text -> m Client
