@@ -12,6 +12,7 @@ module GitHub ( Client
               , IssueState(..)
               , Issue(..)
               , Milestone(..)
+              , fetchMilestones
               ) where
 
 import ClassyPrelude
@@ -193,3 +194,7 @@ fetchOrgs client = fetchJSON client "user/orgs"
 -- Fetches repositories in the given org.
 fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
 fetchOrgRepos client org = fetchJSON client $ "orgs/" ++ orgLogin org ++ "/repos"
+
+-- Fetches milestones in the given repository.
+fetchMilestones :: MonadResource m => Client -> Repository -> m [Milestone]
+fetchMilestones client repo = fetchJSON client $ "repos/" ++ repoNWO repo ++ "/milestones"
