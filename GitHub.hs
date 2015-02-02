@@ -9,6 +9,9 @@ module GitHub ( Client
               , Organization(..)
               , fetchOrgs
               , fetchOrgRepos
+              , IssueState(..)
+              , Issue(..)
+              , Milestone(..)
               ) where
 
 import ClassyPrelude
@@ -67,12 +70,6 @@ instance FromJSON Repository where
 instance Ord Repository where
     compare a b = compare (toCaseFold $ repoNWO a) (toCaseFold $ repoNWO b)
 
--- The fully qualified name of a repository.
-repoNWO :: Repository -> Text
-repoNWO repo =
-    let ownerLogin = userLogin $ repoOwner repo
-    in ownerLogin ++ "/" ++ repoName repo
-
 data Organization = Organization
     { orgId :: Integer
     , orgLogin :: Text
@@ -88,6 +85,70 @@ instance FromJSON Organization where
 
 instance Ord Organization where
     compare a b = compare (toCaseFold $ orgLogin a) (toCaseFold $ orgLogin b)
+
+data IssueState = IssueOpen | IssueClosed
+    deriving (Eq, Show, Ord)
+
+instance FromJSON IssueState where
+    parseJSON (String "open") = return IssueOpen
+    parseJSON (String "closed") = return IssueClosed
+    parseJSON _ = mzero
+
+data Issue = Issue
+    { issueId :: Integer
+    , issueNumber :: Integer
+    , issueTitle :: Text
+    , issueBody :: Text
+    , issueCreator :: User
+    , issueAssignee :: Maybe User
+    , issueState :: IssueState
+    , issueHtmlUrl :: String
+    , issueApiUrl :: String
+    , issueMilestone :: Maybe Milestone
+    } deriving (Eq, Show)
+
+instance FromJSON Issue where
+    parseJSON (Object v) = Issue <$>
+                            v .: "id" <*>
+                            v .: "number" <*>
+                            v .: "title" <*>
+                            v .:? "body" .!= "" <*>
+                            v .: "user" <*>
+                            v .:? "assignee" <*>
+                            v .: "state" <*>
+                            v .: "html_url" <*>
+                            v .: "url" <*>
+                            v .:? "milestone"
+    parseJSON _ = mzero
+
+instance Ord Issue where
+    compare a b = compare (issueNumber a) (issueNumber b)
+
+data Milestone = Milestone
+    { milestoneId :: Integer
+    , milestoneTitle :: Text
+    , milestoneDescription :: Text
+    , milestoneApiUrl :: String
+    , milestoneCreator :: User
+    } deriving (Eq, Show)
+
+instance FromJSON Milestone where
+    parseJSON (Object v) = Milestone <$>
+                            v .: "number" <*>
+                            v .: "title" <*>
+                            v .:? "description" .!= "" <*>
+                            v .: "url" <*>
+                            v .: "creator"
+    parseJSON _ = mzero
+
+instance Ord Milestone where
+    compare a b = compare (toCaseFold $ milestoneTitle a) (toCaseFold $ milestoneTitle b)
+
+-- The fully qualified name of a repository.
+repoNWO :: Repository -> Text
+repoNWO repo =
+    let ownerLogin = userLogin $ repoOwner repo
+    in ownerLogin ++ "/" ++ repoName repo
 
 -- Creates a GitHub client with the given OAuth token.
 newClient :: MonadIO m => Text -> m Client
