@@ -13,6 +13,5 @@ getHomeR :: Handler Html
 getHomeR = do
     maid <- maybeAuthId
     defaultLayout $ do
-        aDomId <- newIdent
         setTitle "ScrumBut"
         $(widgetFile "homepage")
