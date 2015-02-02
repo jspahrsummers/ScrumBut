@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Performs an initial bootstrap of the project, installing all dependencies
+# required for development. This script can also be used to reinstall or upgrade
+# dependencies when the requirements have changed.
 
 set -e
 export SCRIPT_DIR=$(dirname "$0")

@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Seeds development and production databases with required tables, and any test
+# data.
 
 set -e
 

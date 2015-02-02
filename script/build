@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Builds the project.
 
 set -e
 

@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Resolves Cabal dependencies again, picking specific versions and saving them
+# to cabal.config, then installs the chosen dependencies. This script is meant
+# to be run whenever the Cabal dependency version constraints have been
+# adjusted, or when new versions of dependencies are available.
 
 set -e
 
