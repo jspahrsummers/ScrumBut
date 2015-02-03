@@ -139,7 +139,7 @@ fetchRemaining :: (MonadResource m, FromJSON a) => HTTP.Request -> Client -> m [
 fetchRemaining req client = do
     response <- fetchJSON req client
 
-    let value = HTTP.responseBody response
+    let values = HTTP.responseBody response
         nextUrl = nextPageUrl response >>= HTTP.parseUrl
         nextRequest = map (decorateHttpRequest client) nextUrl
 
@@ -147,7 +147,7 @@ fetchRemaining req client = do
                     Just nextRequest' -> fetchRemaining nextRequest' client
                     Nothing -> return []
 
-    return $ value : nextValues
+    return $ values ++ nextValues
 
 -- Sends a request and returns all pages of results.
 fetchAll :: (MonadResource m, FromJSON a) => Request -> m [a]
