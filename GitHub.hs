@@ -124,7 +124,7 @@ links = link `sepBy` (char ',')
 nextPageUrl :: HTTP.Response body -> Maybe String
 nextPageUrl response = do
     linkStrings <- lookup "Link" $ HTTP.responseHeaders response
-    lnks <- maybeResult $ parse links linkStrings
+    lnks <- either (const Nothing) Just $ parseOnly links linkStrings
 
     let isMatch = (==) "next" . linkRelation
 
