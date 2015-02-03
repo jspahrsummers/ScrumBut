@@ -9,4 +9,14 @@ export SCRIPT_DIR=$(dirname "$0")
 branch=$(git symbolic-ref --short HEAD)
 git push "$@" heroku "$branch:master"
 
+dynos=$(heroku ps | wc -l)
+if [ "$dynos" -eq "0" ]
+then
+	heroku run -s PX build
+	heroku ps:scale web=1
+
+	git commit --amend --no-edit
+	git push "$@" --force heroku "$branch:master"
+fi
+
 heroku open
