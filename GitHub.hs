@@ -5,6 +5,8 @@ module GitHub ( Client
               , httpRequest
               , fetch
               , fetchJSON
+              , fetchSingle
+              , fetchAll
               , User(..)
               , Repository(..)
               , fetchRepos
@@ -27,6 +29,7 @@ module GitHub ( Client
 import ClassyPrelude
 import Control.Monad.Trans.Resource
 import Data.Aeson
+import Data.Attoparsec.ByteString.Char8
 import Data.Conduit
 import Data.Conduit.Attoparsec
 import Data.Default
@@ -55,37 +58,100 @@ request client path = Request
     , client = client
     }
 
+-- Adds required GitHub headers to any request.
+decorateHttpRequest :: Client -> HTTP.Request -> HTTP.Request
+decorateHttpRequest client req =
+    let token = getToken client
+    in req
+        { HTTP.requestHeaders =
+            [ ("User-Agent", "ScrumBut")
+            , ("Authorization", "token " ++ encodeUtf8 token)
+            ]
+        }
+
 -- Creates a Conduit HTTP request for a GitHub resource.
 httpRequest :: Request -> HTTP.Request
 httpRequest req =
     let params = "per_page=100" : parameters req
-        token = getToken $ client req
-    in def
+    in decorateHttpRequest (client req) $ def
         { HTTP.method = methodGet
         , HTTP.secure = True
         , HTTP.host = "api.github.com"
         , HTTP.port = 443
         , HTTP.path = encodeUtf8 $ path req
         , HTTP.queryString = encodeUtf8 $ intercalate "&" params
-        , HTTP.requestHeaders =
-            [ ("User-Agent", "ScrumBut")
-            , ("Authorization", "token " ++ encodeUtf8 token)
-            ]
         }
 
 -- Sends a request and streams the results.
-fetch :: MonadResource m => Request -> m (HTTP.Response (ResumableSource m ByteString))
-fetch req = HTTP.http (httpRequest req) (getManager $ client req)
+fetch :: MonadResource m => HTTP.Request -> Client -> m (HTTP.Response (ResumableSource m ByteString))
+fetch req client = HTTP.http req $ getManager client
 
--- Sends a request and returns the result as a JSON value.
-fetchJSON :: (MonadResource m, FromJSON a) => Request -> m a
-fetchJSON req = do
-    response <- fetch req
+-- Sends a request, returning the response as a parsed JSON value.
+fetchJSON :: (MonadResource m, FromJSON a) => HTTP.Request -> Client -> m (HTTP.Response a)
+fetchJSON req client = do
+    response <- fetch req client
     value <- HTTP.responseBody response $$+- sinkParser json
 
     case fromJSON value of
-        Success a -> return a
+        Success a -> return $ fmap (const a) response
         Error str -> fail str
+
+data Link = Link
+    { linkRelation :: Text
+    , linkUrl :: String
+    } deriving (Eq, Show)
+
+link :: Parser Link
+link = do
+    skipSpace
+
+    _ <- char '<'
+    url <- decodeUtf8 <$> takeTill ((==) '>')
+    _ <- char '>'
+
+    _ <- char ';'
+    skipSpace
+
+    _ <- string "rel=\""
+    rel <- decodeUtf8 <$> takeTill ((==) '"')
+    _ <- char '"'
+
+    return $ Link { linkRelation = rel, linkUrl = unpack url }
+
+links :: Parser [Link]
+links = link `sepBy` (char ',')
+
+nextPageUrl :: HTTP.Response body -> Maybe String
+nextPageUrl response = do
+    linkStrings <- lookup "Link" $ HTTP.responseHeaders response
+    lnks <- maybeResult $ parse links linkStrings
+
+    let isMatch = (==) "next" . linkRelation
+
+    map linkUrl $ find isMatch lnks
+
+-- Sends a request and returns the result as a single JSON value.
+fetchSingle :: (MonadResource m, FromJSON a) => Request -> m a
+fetchSingle req = HTTP.responseBody <$> fetchJSON (httpRequest req) (client req)
+
+-- Fetches a page of results and all remaining pages thereafter.
+fetchRemaining :: (MonadResource m, FromJSON a) => HTTP.Request -> Client -> m [a]
+fetchRemaining req client = do
+    response <- fetchJSON req client
+
+    let value = HTTP.responseBody response
+        nextUrl = nextPageUrl response >>= HTTP.parseUrl
+        nextRequest = map (decorateHttpRequest client) nextUrl
+
+    nextValues <- case nextRequest of
+                    Just nextRequest' -> fetchRemaining nextRequest' client
+                    Nothing -> return []
+
+    return $ value : nextValues
+
+-- Sends a request and returns all pages of results.
+fetchAll :: (MonadResource m, FromJSON a) => Request -> m [a]
+fetchAll req = fetchRemaining (httpRequest req) (client req)
 
 data User = User
     { userId :: Integer
@@ -231,19 +297,19 @@ repoRelativePath repo subpath = "repos/" ++ repoNWO repo ++ "/" ++ subpath
 
 -- Fetches repositories of the current user.
 fetchRepos :: MonadResource m => Client -> m [Repository]
-fetchRepos client = fetchJSON $ request client "user/repos"
+fetchRepos client = fetchAll $ request client "user/repos"
 
 -- Fetches a repository by NWO.
 fetchRepo :: MonadResource m => Client -> Text -> Text -> m Repository
-fetchRepo client ownerLogin name = fetchJSON $ request client $ "repos/" ++ ownerLogin ++ "/" ++ name
+fetchRepo client ownerLogin name = fetchSingle $ request client $ "repos/" ++ ownerLogin ++ "/" ++ name
 
 -- Fetches orgs that the current user is a member of.
 fetchOrgs :: MonadResource m => Client -> m [Organization]
-fetchOrgs client = fetchJSON $ request client "user/orgs"
+fetchOrgs client = fetchAll $ request client "user/orgs"
 
 -- Fetches repositories in the given org.
 fetchOrgRepos :: MonadResource m => Client -> Organization -> m [Repository]
-fetchOrgRepos client org = fetchJSON $ request client $ "orgs/" ++ orgLogin org ++ "/repos"
+fetchOrgRepos client org = fetchAll $ request client $ "orgs/" ++ orgLogin org ++ "/repos"
 
 data MilestoneFilter
     = AllMilestones
@@ -271,14 +337,14 @@ instance Show StateFilter where
 fetchIssues :: MonadResource m => Client -> Repository -> StateFilter -> MilestoneFilter -> m [Issue]
 fetchIssues client repo state milestone =
     let req = request client $ repoRelativePath repo "issues"
-    in fetchJSON $ req { parameters = [ pack $ show milestone, pack $ show state ] }
+    in fetchAll $ req { parameters = [ pack $ show milestone, pack $ show state ] }
 
 -- Fetches a single milestone from a repository.
 fetchMilestone :: MonadResource m => Client -> Repository -> Integer -> m Milestone
-fetchMilestone client repo milestoneId = fetchJSON $ request client $ repoRelativePath repo $ "milestones/" ++ pack (show milestoneId)
+fetchMilestone client repo milestoneId = fetchSingle $ request client $ repoRelativePath repo $ "milestones/" ++ pack (show milestoneId)
 
 -- Fetches milestones in the given repository.
 fetchMilestones :: MonadResource m => Client -> Repository -> StateFilter -> m [Milestone]
 fetchMilestones client repo state =
     let req = request client $ repoRelativePath repo "milestones"
-    in fetchJSON $ req { parameters = [ pack $ show state ] }
+    in fetchAll $ req { parameters = [ pack $ show state ] }
