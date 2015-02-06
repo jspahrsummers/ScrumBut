@@ -26,7 +26,7 @@ intToPoints 13 = Just Thirteen
 intToPoints _ = Nothing
 
 data EstimateSubmission = EstimateSubmission
-    { points :: Points
+    { points :: Maybe Points
     } deriving Show
 
 getIssueR :: Text -> Text -> Integer -> Handler Html
@@ -67,15 +67,16 @@ generateIssueId repo issue = do
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
     let estimateField = selectFieldList
-                            [ ("1" :: Text, One)
-                            , ("2", Two)
-                            , ("3", Three)
-                            , ("5", Five)
-                            , ("8", Eight)
-                            , ("13", Thirteen)
+                            [ ("" :: Text, Nothing)
+                            , ("1", Just One)
+                            , ("2", Just Two)
+                            , ("3", Just Three)
+                            , ("5", Just Five)
+                            , ("8", Just Eight)
+                            , ("13", Just Thirteen)
                             ]
     in EstimateSubmission
-        <$> areq estimateField "Estimate: " (fmap estimatePoints current >>= intToPoints)
+        <$> areq estimateField "Estimate: " (return (fmap estimatePoints current >>= intToPoints))
 
 estimateForm = renderDivs . estimateAForm
 
@@ -97,11 +98,17 @@ postIssueR ownerLogin name issueNumber = do
     currentEstimate <- case result of
         FormSuccess submission -> runDB $ do
             issueId <- generateIssueId repo issue
-            Just <$> upsert (Estimate
-                { estimateIssueId = issueId
-                , estimateUserId = userId
-                , estimatePoints = pointsToInt $ points submission
-                }) []
+
+            case points submission of
+                Just p -> Just <$> upsert (Estimate
+                    { estimateIssueId = issueId
+                    , estimateUserId = userId
+                    , estimatePoints = pointsToInt p
+                    }) []
+
+                Nothing -> do
+                    deleteBy $ UniqueEstimate issueId userId
+                    return Nothing
         _ -> do
             setMessage "Error in form submission"
             runDB $ do
