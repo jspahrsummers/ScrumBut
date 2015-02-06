@@ -73,7 +73,7 @@ estimateForm = renderDivs estimateAForm
 -- TODO: This should really be PUT.
 postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
-    ((result, _), _) <- runFormPost estimateForm
+    ((result, formWidget), enctype) <- runFormPost estimateForm
 
     -- TODO: Reduce this duplication.
     userId <- requireAuthId
@@ -85,14 +85,20 @@ postIssueR ownerLogin name issueNumber = do
     repo <- GH.fetchRepo client ownerLogin name
     issue <- GH.fetchIssue client repo issueNumber
 
-    case result of
+    currentEstimate <- case result of
         FormSuccess submission -> runDB $ do
             issueId <- generateIssueId repo issue
-            void $ upsert (Estimate
+            Just <$> upsert (Estimate
                 { estimateIssueId = issueId
                 , estimateUserId = userId
                 , estimatePoints = pointsToInt $ points submission
                 }) []
-        _ -> setMessage "Error in form submission"
+        _ -> do
+            setMessage "Error in form submission"
+            runDB $ do
+                issueId <- generateIssueId repo issue
+                getBy $ UniqueEstimate issueId userId
 
-    getIssueR ownerLogin name issueNumber
+    defaultLayout $ do
+        setTitle "ScrumBut | Issue"
+        $(widgetFile "issue")
