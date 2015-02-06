@@ -1,7 +1,8 @@
 <h1>##{GH.issueNumber issue}: #{GH.issueTitle issue}
 <p>#{GH.issueBody issue}
 
-<p>Your current estimate:
+$maybe estimate <- currentEstimate
+    <p>Your current estimate: #{estimatePoints (entityVal estimate)}
 
 <form method=post action=@{IssueR ownerLogin name issueNumber} enctype=#{enctype}>
     ^{formWidget}
