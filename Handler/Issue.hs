@@ -4,29 +4,8 @@ import Data.Maybe (fromJust)
 import Import
 import qualified GitHub as GH
 
-data Points = One | Two | Three | Five | Eight | Thirteen
-    deriving (Eq, Show, Ord)
-
--- TODO: There's probably a prebuilt thing to do this.
-pointsToInt :: Points -> Int
-pointsToInt One = 1
-pointsToInt Two = 2
-pointsToInt Three = 3
-pointsToInt Five = 5
-pointsToInt Eight = 8
-pointsToInt Thirteen = 13
-
-intToPoints :: Int -> Maybe Points
-intToPoints 1 = Just One
-intToPoints 2 = Just Two
-intToPoints 3 = Just Three
-intToPoints 5 = Just Five
-intToPoints 8 = Just Eight
-intToPoints 13 = Just Thirteen
-intToPoints _ = Nothing
-
 data EstimateSubmission = EstimateSubmission
-    { points :: Maybe Points
+    { points :: Maybe Int
     } deriving Show
 
 getIssueR :: Text -> Text -> Integer -> Handler Html
@@ -68,15 +47,15 @@ estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
     let estimateField = selectFieldList
                             [ ("" :: Text, Nothing)
-                            , ("1", Just One)
-                            , ("2", Just Two)
-                            , ("3", Just Three)
-                            , ("5", Just Five)
-                            , ("8", Just Eight)
-                            , ("13", Just Thirteen)
+                            , ("1", Just 1)
+                            , ("2", Just 2)
+                            , ("3", Just 3)
+                            , ("5", Just 5)
+                            , ("8", Just 8)
+                            , ("13", Just 13)
                             ]
     in EstimateSubmission
-        <$> areq estimateField "Your estimate: " (return (fmap estimatePoints current >>= intToPoints))
+        <$> areq estimateField "Your estimate: " (return $ fmap estimatePoints current)
 
 estimateForm = renderDivs . estimateAForm
 
@@ -103,7 +82,7 @@ postIssueR ownerLogin name issueNumber = do
                 Just p -> Just <$> upsert (Estimate
                     { estimateIssueId = issueId
                     , estimateUserId = userId
-                    , estimatePoints = pointsToInt p
+                    , estimatePoints = p
                     }) []
 
                 Nothing -> do
