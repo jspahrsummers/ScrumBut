@@ -38,6 +38,7 @@ library
                      Handler.Home
                      Handler.Repo
                      Handler.Milestone
+                     Handler.Issue
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

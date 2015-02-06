@@ -1,0 +1,2 @@
+<h1>##{GH.issueNumber issue}: #{GH.issueTitle issue}
+<p>#{GH.issueBody issue}
