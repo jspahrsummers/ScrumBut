@@ -7,6 +7,7 @@ import qualified GitHub as GH
 data Points = One | Two | Three | Five | Eight | Thirteen
     deriving (Eq, Show, Ord)
 
+-- TODO: There's probably a prebuilt thing to do this.
 pointsToInt :: Points -> Int
 pointsToInt One = 1
 pointsToInt Two = 2
@@ -14,6 +15,15 @@ pointsToInt Three = 3
 pointsToInt Five = 5
 pointsToInt Eight = 8
 pointsToInt Thirteen = 13
+
+intToPoints :: Int -> Maybe Points
+intToPoints 1 = Just One
+intToPoints 2 = Just Two
+intToPoints 3 = Just Three
+intToPoints 5 = Just Five
+intToPoints 8 = Just Eight
+intToPoints 13 = Just Thirteen
+intToPoints _ = Nothing
 
 data EstimateSubmission = EstimateSubmission
     { points :: Points
@@ -34,7 +44,7 @@ getIssueR ownerLogin name issueNumber = do
         issueId <- generateIssueId repo issue
         getBy $ UniqueEstimate issueId userId
 
-    (formWidget, enctype) <- generateFormPost estimateForm
+    (formWidget, enctype) <- generateFormPost $ estimateForm $ fmap entityVal currentEstimate
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
         $(widgetFile "issue")
@@ -54,8 +64,8 @@ generateIssueId repo issue = do
 
     return $ entityKey dbIssue
 
-estimateAForm :: AForm Handler EstimateSubmission
-estimateAForm =
+estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
+estimateAForm current =
     let estimateField = selectFieldList
                             [ ("1" :: Text, One)
                             , ("2", Two)
@@ -65,15 +75,14 @@ estimateAForm =
                             , ("13", Thirteen)
                             ]
     in EstimateSubmission
-        <$> areq estimateField "Estimate: " Nothing
+        <$> areq estimateField "Estimate: " (fmap estimatePoints current >>= intToPoints)
 
-estimateForm :: Html -> MForm Handler (FormResult EstimateSubmission, Widget)
-estimateForm = renderDivs estimateAForm
+estimateForm = renderDivs . estimateAForm
 
 -- TODO: This should really be PUT.
 postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
-    ((result, formWidget), enctype) <- runFormPost estimateForm
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm Nothing
 
     -- TODO: Reduce this duplication.
     userId <- requireAuthId
