@@ -76,7 +76,7 @@ estimateAForm current =
                             , ("13", Just Thirteen)
                             ]
     in EstimateSubmission
-        <$> areq estimateField "Estimate: " (return (fmap estimatePoints current >>= intToPoints))
+        <$> areq estimateField "Your estimate: " (return (fmap estimatePoints current >>= intToPoints))
 
 estimateForm = renderDivs . estimateAForm
 
