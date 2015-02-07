@@ -8,8 +8,8 @@ data EstimateSubmission = EstimateSubmission
     { points :: Maybe Int
     } deriving Show
 
-getIssueR :: Text -> Text -> Integer -> Handler Html
-getIssueR ownerLogin name issueNumber = do
+resolveRequestArguments :: Text -> Text -> Integer -> Handler (UserId, GH.Repository, GH.Issue)
+resolveRequestArguments ownerLogin name issueNumber = do
     userId <- requireAuthId
     user <- runDB $ get userId
 
@@ -18,10 +18,15 @@ getIssueR ownerLogin name issueNumber = do
 
     repo <- GH.fetchRepo client ownerLogin name
     issue <- GH.fetchIssue client repo issueNumber
+    return (userId, repo, issue)
+
+getIssueR :: Text -> Text -> Integer -> Handler Html
+getIssueR ownerLogin name issueNumber = do
+    (userId, _, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
     currentEstimate <- runDB $ getEstimate (GH.issueId issue) userId
-
     (formWidget, enctype) <- generateFormPost $ estimateForm $ fmap entityVal currentEstimate
+
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
         $(widgetFile "issue")
@@ -51,15 +56,7 @@ estimateForm = renderDivs . estimateAForm
 -- TODO: This should really be PUT.
 postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
-    -- TODO: Reduce this duplication.
-    userId <- requireAuthId
-    user <- runDB $ get userId
-
-    let token = userToken $ fromJust user
-    client <- GH.newClient token
-
-    repo <- GH.fetchRepo client ownerLogin name
-    issue <- GH.fetchIssue client repo issueNumber
+    (userId, repo, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
     originalEstimate <- runDB $ getEstimate (GH.issueId issue) userId
     ((result, formWidget), enctype) <- runFormPost $ estimateForm $ fmap entityVal originalEstimate
