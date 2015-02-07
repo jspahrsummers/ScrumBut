@@ -57,6 +57,7 @@ estimateAForm current =
     in EstimateSubmission
         <$> areq estimateField "Your estimate: " (return $ fmap estimatePoints current)
 
+estimateForm :: Maybe Estimate -> Html -> MForm Handler (FormResult EstimateSubmission, Widget)
 estimateForm = renderDivs . estimateAForm
 
 -- TODO: This should really be PUT.
