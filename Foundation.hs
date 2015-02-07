@@ -137,8 +137,9 @@ instance YesodAuth App where
                 Just uid <$ update uid [ UserToken =. token ]
             Nothing ->
                 fmap Just $ insert User
+                    -- TODO: This is currently an email address, but should be a
+                    -- GitHub user ID.
                     { userIdent = credsIdent creds
-                    , userPassword = Nothing
                     , userToken = token
                     }
 

@@ -1,0 +1,6 @@
+<h1>##{GH.issueNumber issue}: #{GH.issueTitle issue}
+<p>#{GH.issueBody issue}
+
+<form method=post action=@{IssueR ownerLogin name issueNumber} enctype=#{enctype}>
+    ^{formWidget}
+    <input type=submit value=Save>

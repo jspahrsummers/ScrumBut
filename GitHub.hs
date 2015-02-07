@@ -19,6 +19,7 @@ module GitHub ( Client
               , StateFilter(..)
               , IssueState(..)
               , Issue(..)
+              , fetchIssue
               , fetchIssues
               , MilestoneState(..)
               , Milestone(..)
@@ -332,6 +333,10 @@ instance Show StateFilter where
     show OnlyOpen = "state=open"
     show OnlyClosed = "state=closed"
     show AllStates = "state=all"
+
+-- Fetches a single issue from a repository.
+fetchIssue :: MonadResource m => Client -> Repository -> Integer -> m Issue
+fetchIssue client repo issueNumber = fetchSingle $ request client $ repoRelativePath repo $ "issues/" ++ pack (show issueNumber)
 
 -- Fetches issues in the given repository.
 fetchIssues :: MonadResource m => Client -> Repository -> StateFilter -> MilestoneFilter -> m [Issue]

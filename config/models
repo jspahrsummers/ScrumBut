@@ -1,20 +1,25 @@
 User
     ident Text
-    -- TODO: Delete this field & migrate
-    password Text Maybe
     token Text
     UniqueUser ident
     deriving Typeable
--- TODO: Delete this table & migrate
-Email
-    email Text
-    user UserId Maybe
-    verkey Text Maybe
-    UniqueEmail email
 Repository
-    githubId Text
+    githubId String
     name Text
     ownerLogin Text
     UniqueRepository githubId
+    deriving Show
+Issue
+    githubId String
+    number String
+    repositoryId RepositoryId
+    UniqueIssue githubId
+    deriving Show
+Estimate
+    issueId IssueId
+    userId UserId
+    points Int
+    UniqueEstimate issueId userId
+    deriving Show
 
 -- By default this file is used in Model.hs (which is imported by Foundation.hs)

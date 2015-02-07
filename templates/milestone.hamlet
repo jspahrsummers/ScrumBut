@@ -4,4 +4,4 @@
 <ol>
     $forall issue <- issues
         <li value=#{GH.issueNumber issue}>
-            <a href=#{GH.issueHtmlUrl issue}>#{GH.issueTitle issue}
+            <a href=@{IssueR ownerLogin name (GH.issueNumber issue)}>#{GH.issueTitle issue}

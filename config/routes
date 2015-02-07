@@ -7,3 +7,4 @@
 / HomeR GET
 /repos/#Text/#Text RepoR GET
 /repos/#Text/#Text/milestones/#Integer MilestoneR GET
+/repos/#Text/#Text/issues/#Integer IssueR GET POST
