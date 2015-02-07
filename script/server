@@ -6,5 +6,6 @@ set -e
 export SCRIPT_DIR=$(dirname "$0")
 
 . "$SCRIPT_DIR/startdb"
+. "$SCRIPT_DIR/credentials"
 
 yesod devel
