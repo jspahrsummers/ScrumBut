@@ -19,29 +19,17 @@ getIssueR ownerLogin name issueNumber = do
     repo <- GH.fetchRepo client ownerLogin name
     issue <- GH.fetchIssue client repo issueNumber
 
-    currentEstimate <- runDB $ do
-        issueId <- generateIssueId repo issue
-        getBy $ UniqueEstimate issueId userId
+    currentEstimate <- runDB $ getEstimate (GH.issueId issue) userId
 
     (formWidget, enctype) <- generateFormPost $ estimateForm $ fmap entityVal currentEstimate
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
         $(widgetFile "issue")
 
-generateIssueId repo issue = do
-    dbRepo <- upsert (Repository
-        { repositoryGithubId = show $ GH.repoId repo
-        , repositoryName = GH.repoName repo
-        , repositoryOwnerLogin = GH.userLogin $ GH.repoOwner repo
-        }) []
-
-    dbIssue <- upsert (Issue
-        { issueGithubId = show $ GH.issueId issue
-        , issueNumber = show $ GH.issueNumber issue
-        , issueRepositoryId = entityKey dbRepo
-        }) []
-
-    return $ entityKey dbIssue
+getEstimate :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe (Entity Estimate))
+getEstimate githubIssueId userId = do
+    maybeIssue <- getBy $ UniqueIssue $ show githubIssueId
+    maybe (return Nothing) (\dbIssue -> getBy $ UniqueEstimate (entityKey dbIssue) userId) maybeIssue
 
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
@@ -63,8 +51,6 @@ estimateForm = renderDivs . estimateAForm
 -- TODO: This should really be PUT.
 postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
-    ((result, formWidget), enctype) <- runFormPost $ estimateForm Nothing
-
     -- TODO: Reduce this duplication.
     userId <- requireAuthId
     user <- runDB $ get userId
@@ -75,25 +61,34 @@ postIssueR ownerLogin name issueNumber = do
     repo <- GH.fetchRepo client ownerLogin name
     issue <- GH.fetchIssue client repo issueNumber
 
-    currentEstimate <- case result of
+    originalEstimate <- runDB $ getEstimate (GH.issueId issue) userId
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm $ fmap entityVal originalEstimate
+
+    case result of
         FormSuccess submission -> runDB $ do
-            issueId <- generateIssueId repo issue
+            dbRepo <- upsert (Repository
+                { repositoryGithubId = show $ GH.repoId repo
+                , repositoryName = GH.repoName repo
+                , repositoryOwnerLogin = GH.userLogin $ GH.repoOwner repo
+                }) []
+
+            dbIssue <- upsert (Issue
+                { issueGithubId = show $ GH.issueId issue
+                , issueNumber = show $ GH.issueNumber issue
+                , issueRepositoryId = entityKey dbRepo
+                }) []
+
+            let issueId = entityKey dbIssue
 
             case points submission of
-                Just p -> Just <$> upsert (Estimate
+                Just p -> void $ upsert (Estimate
                     { estimateIssueId = issueId
                     , estimateUserId = userId
                     , estimatePoints = p
                     }) []
 
-                Nothing -> do
-                    deleteBy $ UniqueEstimate issueId userId
-                    return Nothing
-        _ -> do
-            setMessage "Error in form submission"
-            runDB $ do
-                issueId <- generateIssueId repo issue
-                getBy $ UniqueEstimate issueId userId
+                Nothing -> deleteBy $ UniqueEstimate issueId userId
+        _ -> setMessage "Error in form submission"
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
