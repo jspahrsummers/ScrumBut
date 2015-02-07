@@ -10,7 +10,7 @@ import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 
--- The OAuth scopes to use when authenicating with GitHub.
+-- The OAuth scopes to use when authenticating with GitHub.
 oauthGitHubScopes :: [Text]
 oauthGitHubScopes = [ "user:email", "read:org", "repo" ]
 
