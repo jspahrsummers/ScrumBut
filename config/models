@@ -1,7 +1,9 @@
 User
-    ident Text
+    githubId Text
+    login Text
+    email Text
     token Text
-    UniqueUser ident
+    UniqueUser githubId
     deriving Typeable
 Repository
     githubId String

@@ -129,17 +129,17 @@ instance YesodAuth App where
     getAuthId creds = runDB $ do
         x <- getBy $ UniqueUser $ credsIdent creds
 
-        -- FIXME: Don't hardcode this key, don't force-unwrap
-        let token = fromJust $ lookup "access_token" $ credsExtra creds
+        let extra = credsExtra creds
+            token = fromJust $ lookup "access_token" extra
 
         case x of
             Just (Entity uid _) ->
                 Just uid <$ update uid [ UserToken =. token ]
             Nothing ->
                 fmap Just $ insert User
-                    -- TODO: This is currently an email address, but should be a
-                    -- GitHub user ID.
-                    { userIdent = credsIdent creds
+                    { userGithubId = credsIdent creds
+                    , userLogin = fromJust $ lookup "login" extra
+                    , userEmail = fromJust $ lookup "email" extra
                     , userToken = token
                     }
 
