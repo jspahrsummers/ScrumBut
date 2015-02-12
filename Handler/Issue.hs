@@ -25,8 +25,8 @@ getIssueR :: Text -> Text -> Integer -> Handler Html
 getIssueR ownerLogin name issueNumber = do
     (userId, _, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    estimates <- fmap estimatesByUser $ runDB $ estimatesForIssue (GH.issueId issue)
-    (formWidget, enctype) <- generateFormPost $ estimateForm $ Map.lookup userId estimates
+    (myEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
+    (formWidget, enctype) <- generateFormPost $ estimateForm myEstimate
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
@@ -42,6 +42,11 @@ estimatesByUser :: [Estimate] -> Map.Map UserId Estimate
 estimatesByUser estimates =
     let insertEstimate m estimate = Map.insert (estimateUserId estimate) estimate m
     in foldl' insertEstimate Map.empty estimates
+
+myEstimateAndOthers :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe Estimate, Map.Map UserId Estimate)
+myEstimateAndOthers githubIssueId userId = do
+    estimates <- liftM estimatesByUser $ estimatesForIssue githubIssueId
+    return (Map.lookup userId estimates, Map.delete userId estimates)
 
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
@@ -65,8 +70,8 @@ postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
     (userId, repo, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    estimates <- fmap estimatesByUser $ runDB $ estimatesForIssue (GH.issueId issue)
-    ((result, formWidget), enctype) <- runFormPost $ estimateForm $ Map.lookup userId estimates
+    (myEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm myEstimate
 
     case result of
         FormSuccess submission -> runDB $ do
