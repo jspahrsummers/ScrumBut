@@ -18,6 +18,7 @@ before_install:
 install:
   - git clone https://github.com/mietek/halcyon.git /app/halcyon
   - /app/halcyon/halcyon build
+  - ln -sf /app/sandbox/cabal.sandbox.config cabal.sandbox.config
 
 before_script:
   - script/setup
