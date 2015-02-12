@@ -8,6 +8,9 @@ notifications:
   slack:
     secure: dNE7nOHDxyrwcgPfcDJB6WZeoYCYx/ZGI4rOJsSxbxK//0uUjZ1ECwUW4wN0+sQkYUqm0xKku9ZUHFCVDr8R572srM+7cJ8vUcEy2m3cQ+aHkZF6mvbiyncEB/GbPQto8z9n5FwwHDOneBGvk/+nv0AM0hkShbAUQxNNxFFy5kE=
 
+env:
+  - HALCYON_SANDBOX_EXTRA_APPS="alex-3.1.4 happy-1.19.5"
+
 before_install:
   - sudo mkdir /app
   - sudo chown $USER:$USER /app
