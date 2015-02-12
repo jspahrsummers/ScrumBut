@@ -9,3 +9,9 @@ import Database.Persist.Quasi
 -- http://www.yesodweb.com/book/persistent/
 share [mkPersist sqlSettings, mkMigrate "migrateAll"]
     $(persistFileWith lowerCaseSettings "config/models")
+
+instance Eq User where
+    (==) = (==) `on` userGithubId
+
+instance Ord User where
+    compare = compare `on` (toCaseFold . userLogin)
