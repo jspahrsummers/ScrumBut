@@ -1,5 +1,6 @@
 module Handler.Issue where
 
+import qualified Data.Map.Strict as Map
 import Data.Maybe (fromJust)
 import Import
 import qualified GitHub as GH
@@ -24,17 +25,23 @@ getIssueR :: Text -> Text -> Integer -> Handler Html
 getIssueR ownerLogin name issueNumber = do
     (userId, _, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    currentEstimate <- runDB $ getEstimate (GH.issueId issue) userId
-    (formWidget, enctype) <- generateFormPost $ estimateForm $ fmap entityVal currentEstimate
+    estimates <- fmap estimatesByUser $ runDB $ estimatesForIssue (GH.issueId issue)
+    (formWidget, enctype) <- generateFormPost $ estimateForm $ Map.lookup userId estimates
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
         $(widgetFile "issue")
 
-getEstimate :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe (Entity Estimate))
-getEstimate githubIssueId userId = do
+estimatesForIssue :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> ReaderT backend m [Estimate]
+estimatesForIssue githubIssueId = do
     maybeIssue <- getBy $ UniqueIssue $ show githubIssueId
-    maybe (return Nothing) (\dbIssue -> getBy $ UniqueEstimate (entityKey dbIssue) userId) maybeIssue
+    entities <- maybe (return []) (\dbIssue -> selectList [ EstimateIssueId ==. entityKey dbIssue ] []) maybeIssue
+    return $ fmap entityVal entities
+
+estimatesByUser :: [Estimate] -> Map.Map UserId Estimate
+estimatesByUser estimates =
+    let insertEstimate m estimate = Map.insert (estimateUserId estimate) estimate m
+    in foldl' insertEstimate Map.empty estimates
 
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
@@ -58,8 +65,8 @@ postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
     (userId, repo, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    originalEstimate <- runDB $ getEstimate (GH.issueId issue) userId
-    ((result, formWidget), enctype) <- runFormPost $ estimateForm $ fmap entityVal originalEstimate
+    estimates <- fmap estimatesByUser $ runDB $ estimatesForIssue (GH.issueId issue)
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm $ Map.lookup userId estimates
 
     case result of
         FormSuccess submission -> runDB $ do
