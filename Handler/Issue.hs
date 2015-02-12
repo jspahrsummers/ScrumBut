@@ -1,5 +1,6 @@
 module Handler.Issue where
 
+import qualified Data.Map.Strict as Map
 import Data.Maybe (fromJust)
 import Import
 import qualified GitHub as GH
@@ -24,17 +25,36 @@ getIssueR :: Text -> Text -> Integer -> Handler Html
 getIssueR ownerLogin name issueNumber = do
     (userId, _, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    currentEstimate <- runDB $ getEstimate (GH.issueId issue) userId
-    (formWidget, enctype) <- generateFormPost $ estimateForm $ fmap entityVal currentEstimate
+    (myEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
+    (formWidget, enctype) <- generateFormPost $ estimateForm myEstimate
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
         $(widgetFile "issue")
 
-getEstimate :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe (Entity Estimate))
-getEstimate githubIssueId userId = do
+estimatesForIssue :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> ReaderT backend m [Estimate]
+estimatesForIssue githubIssueId = do
     maybeIssue <- getBy $ UniqueIssue $ show githubIssueId
-    maybe (return Nothing) (\dbIssue -> getBy $ UniqueEstimate (entityKey dbIssue) userId) maybeIssue
+    entities <- maybe (return []) (\dbIssue -> selectList [ EstimateIssueId ==. entityKey dbIssue ] []) maybeIssue
+    return $ fmap entityVal entities
+
+estimatesByUser :: [Estimate] -> Map.Map UserId Estimate
+estimatesByUser estimates =
+    let insertEstimate m estimate = Map.insert (estimateUserId estimate) estimate m
+    in foldl' insertEstimate Map.empty estimates
+
+lookupUser :: (MonadIO m, backend ~ PersistEntityBackend User) => UserId -> Estimate -> ReaderT backend m (Maybe (User, Estimate))
+lookupUser userId estimate = do
+    maybeUser <- get userId
+    return $ fmap (, estimate) maybeUser
+
+-- TODO: Don't fetch others' estimates/users if we don't have our own estimate.
+myEstimateAndOthers :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe Estimate, [(User, Estimate)])
+myEstimateAndOthers githubIssueId userId = do
+    estimates <- liftM estimatesByUser $ estimatesForIssue githubIssueId
+    maybeUsersAndEstimates <- mapM (uncurry lookupUser) $ Map.toList $ Map.delete userId estimates
+
+    return (Map.lookup userId estimates, catMaybes maybeUsersAndEstimates)
 
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
@@ -58,10 +78,10 @@ postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
     (userId, repo, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    originalEstimate <- runDB $ getEstimate (GH.issueId issue) userId
-    ((result, formWidget), enctype) <- runFormPost $ estimateForm $ fmap entityVal originalEstimate
+    (originalEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm originalEstimate
 
-    case result of
+    myEstimate <- case result of
         FormSuccess submission -> runDB $ do
             dbRepo <- upsert (Repository
                 { repositoryGithubId = show $ GH.repoId repo
@@ -78,14 +98,18 @@ postIssueR ownerLogin name issueNumber = do
             let issueId = entityKey dbIssue
 
             case points submission of
-                Just p -> void $ upsert (Estimate
+                Just p -> fmap (Just . entityVal) $ upsert (Estimate
                     { estimateIssueId = issueId
                     , estimateUserId = userId
                     , estimatePoints = p
                     }) []
 
-                Nothing -> deleteBy $ UniqueEstimate issueId userId
-        _ -> setMessage "Error in form submission"
+                Nothing -> do
+                    deleteBy $ UniqueEstimate issueId userId
+                    return Nothing
+        _ -> do
+            setMessage "Error in form submission"
+            return Nothing
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
