@@ -78,10 +78,10 @@ postIssueR :: Text -> Text -> Integer -> Handler Html
 postIssueR ownerLogin name issueNumber = do
     (userId, repo, issue) <- resolveRequestArguments ownerLogin name issueNumber
 
-    (myEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
-    ((result, formWidget), enctype) <- runFormPost $ estimateForm myEstimate
+    (originalEstimate, otherEstimates) <- runDB $ myEstimateAndOthers (GH.issueId issue) userId
+    ((result, formWidget), enctype) <- runFormPost $ estimateForm originalEstimate
 
-    case result of
+    myEstimate <- case result of
         FormSuccess submission -> runDB $ do
             dbRepo <- upsert (Repository
                 { repositoryGithubId = show $ GH.repoId repo
@@ -98,14 +98,18 @@ postIssueR ownerLogin name issueNumber = do
             let issueId = entityKey dbIssue
 
             case points submission of
-                Just p -> void $ upsert (Estimate
+                Just p -> fmap (Just . entityVal) $ upsert (Estimate
                     { estimateIssueId = issueId
                     , estimateUserId = userId
                     , estimatePoints = p
                     }) []
 
-                Nothing -> deleteBy $ UniqueEstimate issueId userId
-        _ -> setMessage "Error in form submission"
+                Nothing -> do
+                    deleteBy $ UniqueEstimate issueId userId
+                    return Nothing
+        _ -> do
+            setMessage "Error in form submission"
+            return Nothing
 
     defaultLayout $ do
         setTitle "ScrumBut | Issue"
