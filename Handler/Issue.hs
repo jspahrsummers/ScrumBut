@@ -43,10 +43,17 @@ estimatesByUser estimates =
     let insertEstimate m estimate = Map.insert (estimateUserId estimate) estimate m
     in foldl' insertEstimate Map.empty estimates
 
-myEstimateAndOthers :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe Estimate, Map.Map UserId Estimate)
+lookupUser :: (MonadIO m, backend ~ PersistEntityBackend User) => UserId -> Estimate -> ReaderT backend m (Maybe (User, Estimate))
+lookupUser userId estimate = do
+    maybeUser <- get userId
+    return $ fmap (, estimate) maybeUser
+
+myEstimateAndOthers :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe Estimate, [(User, Estimate)])
 myEstimateAndOthers githubIssueId userId = do
     estimates <- liftM estimatesByUser $ estimatesForIssue githubIssueId
-    return (Map.lookup userId estimates, Map.delete userId estimates)
+    maybeUsersAndEstimates <- mapM (uncurry lookupUser) $ Map.toList $ Map.delete userId estimates
+
+    return (Map.lookup userId estimates, catMaybes maybeUsersAndEstimates)
 
 estimateAForm :: Maybe Estimate -> AForm Handler EstimateSubmission
 estimateAForm current =
