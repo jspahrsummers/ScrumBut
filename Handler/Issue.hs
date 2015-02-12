@@ -48,6 +48,7 @@ lookupUser userId estimate = do
     maybeUser <- get userId
     return $ fmap (, estimate) maybeUser
 
+-- TODO: Don't fetch others' estimates/users if we don't have our own estimate.
 myEstimateAndOthers :: (MonadIO m, backend ~ PersistEntityBackend Estimate) => Integer -> UserId -> ReaderT backend m (Maybe Estimate, [(User, Estimate)])
 myEstimateAndOthers githubIssueId userId = do
     estimates <- liftM estimatesByUser $ estimatesForIssue githubIssueId

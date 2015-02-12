@@ -1,6 +1,14 @@
 <h1>##{GH.issueNumber issue}: #{GH.issueTitle issue}
 <p>#{GH.issueBody issue}
 
+$maybe _ <- myEstimate
+    <ul>
+        $forall (user, estimate) <- otherEstimates
+            <li>
+                <a href=https://github.com/#{userLogin user}>@#{userLogin user}
+                estimated this as a
+                <strong>#{estimatePoints estimate}
+
 <form method=post action=@{IssueR ownerLogin name issueNumber} enctype=#{enctype}>
     ^{formWidget}
     <input type=submit value=Save>
