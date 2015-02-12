@@ -9,8 +9,7 @@ notifications:
     secure: dNE7nOHDxyrwcgPfcDJB6WZeoYCYx/ZGI4rOJsSxbxK//0uUjZ1ECwUW4wN0+sQkYUqm0xKku9ZUHFCVDr8R572srM+7cJ8vUcEy2m3cQ+aHkZF6mvbiyncEB/GbPQto8z9n5FwwHDOneBGvk/+nv0AM0hkShbAUQxNNxFFy5kE=
 
 env:
-  - HALCYON_SANDBOX_EXTRA_APPS="alex-3.1.4 happy-1.19.5 yesod-bin-1.4.3.6"
-  - HALCYON_EXTRA_CONFIGURE_FLAGS=--enable-tests
+  - HALCYON_SANDBOX_EXTRA_APPS="alex-3.1.4 happy-1.19.5 yesod-bin-1.4.3.6" HALCYON_EXTRA_CONFIGURE_FLAGS=--enable-tests
 
 before_install:
   - sudo mkdir /app
