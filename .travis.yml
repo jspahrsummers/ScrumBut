@@ -1,10 +1,32 @@
-language: haskell
-ghc: 7.8
+# Based on the settings found in https://github.com/thoughtbot/carnival
+# Copyright (C) 2014 thoughtbot <hello@thoughtbot.com>, released under the MIT License
+
+language: sh
+
 notifications:
   email: false
   slack:
     secure: dNE7nOHDxyrwcgPfcDJB6WZeoYCYx/ZGI4rOJsSxbxK//0uUjZ1ECwUW4wN0+sQkYUqm0xKku9ZUHFCVDr8R572srM+7cJ8vUcEy2m3cQ+aHkZF6mvbiyncEB/GbPQto8z9n5FwwHDOneBGvk/+nv0AM0hkShbAUQxNNxFFy5kE=
-before_install: cabal install -j --max-backjumps=-1 alex happy
-before_script: script/setup
+
+env:
+  - HALCYON_SANDBOX_EXTRA_APPS="alex-3.1.4 happy-1.19.5 yesod-bin-1.4.3.6" HALCYON_EXTRA_CONFIGURE_FLAGS=--enable-tests HALCYON_SANDBOX_EXTRA_CONFIGURE_FLAGS=--enable-tests
+
+before_install:
+  - sudo mkdir /app
+  - sudo chown $USER:$USER /app
+
+install:
+  - git clone https://github.com/mietek/halcyon.git /app/halcyon
+  - /app/halcyon/halcyon build
+  - ln -sf /app/sandbox/cabal.sandbox.config cabal.sandbox.config
+
+before_script:
+  - script/setup
+  - /app/halcyon/halcyon paths > halcyon-env
+
+script:
+  - source halcyon-env
+  - script/test
+
 addons:
   postgresql: '9.3'
