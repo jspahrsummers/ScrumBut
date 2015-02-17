@@ -1,0 +1,20 @@
+{
+  "name": "ScrumBut",
+  "description": "Scrum, but with GitHub Issues",
+  "repository": "https://github.com/jspahrsummers/ScrumBut",
+  "env": {
+    "BUILDPACK_URL": "https://github.com/mietek/haskell-on-heroku",
+    "GITHUB_CLIENT_ID": "",
+    "GITHUB_CLIENT_SECRET": "",
+    "PGDATABASE": "",
+    "PGHOST": "",
+    "PGPASS": "",
+    "PGUSER": ""
+  },
+  "addons": [
+    "heroku-postgresql:hobby-dev"
+  ],
+  "scripts": {
+    "postdeploy": "build"
+  }
+}
