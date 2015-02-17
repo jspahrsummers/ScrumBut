@@ -31,6 +31,8 @@ Although there are many possible ways to deploy ScrumBut, the only _supported_ m
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
+After the template has been deployed, you’ll need to [set up private storage](https://haskellonheroku.com/tutorial/#set-up-private-storage) then [build on a one-off PX dyno](https://haskellonheroku.com/tutorial/#build-on-a-one-off-px-dyno) before the app can be used.
+
 ## License
 
 ScrumBut is released under the [MIT License](LICENSE.md).
