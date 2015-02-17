@@ -65,13 +65,14 @@ makeFoundation appSettings = do
         tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
         logFunc = messageLoggerSource tempFoundation appLogger
 
-    -- Create the database connection pool
-    #if DEVELOPMENT
-    let connStr = pgConnStr $ appDatabaseConf appSettings
-    #else
-    connStr <- herokuConnStr
-    #endif
+    connStr <-
+        #if DEVELOPMENT
+        return $ pgConnStr $ appDatabaseConf appSettings
+        #else
+        herokuConnStr
+        #endif
 
+    -- Create the database connection pool
     pool <- flip runLoggingT logFunc $ createPostgresqlPool
         connStr
         (pgPoolSize $ appDatabaseConf appSettings)
