@@ -25,6 +25,7 @@ import Network.Wai.Middleware.RequestLogger (Destination (Logger),
                                              IPAddrSource (..),
                                              OutputFormat (..), destination,
                                              mkRequestLogger, outputFormat)
+import System.Environment
 import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
                                              toLogStr)
 import Web.Heroku.Postgres
@@ -65,12 +66,10 @@ makeFoundation appSettings = do
         tempFoundation = mkFoundation $ error "connPool forced in tempFoundation"
         logFunc = messageLoggerSource tempFoundation appLogger
 
-    connStr <-
-        #if DEVELOPMENT
-        return $ pgConnStr $ appDatabaseConf appSettings
-        #else
-        herokuConnStr
-        #endif
+    hasDatabaseUrl <- isJust <$> lookupEnv "DATABASE_URL"
+    connStr <- if hasDatabaseUrl
+                then herokuConnStr
+                else return $ pgConnStr $ appDatabaseConf appSettings
 
     -- Create the database connection pool
     pool <- flip runLoggingT logFunc $ createPostgresqlPool
