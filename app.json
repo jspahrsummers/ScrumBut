@@ -13,8 +13,5 @@
   },
   "addons": [
     "heroku-postgresql:hobby-dev"
-  ],
-  "scripts": {
-    "postdeploy": "build"
-  }
+  ]
 }
