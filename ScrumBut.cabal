@@ -103,6 +103,7 @@ library
                  , http-types                    >= 0.8.5      && < 0.9
                  , conduit-extra                 >= 1.1.6.2    && < 1.2
                  , attoparsec                    >= 0.10.4.0   && < 0.11
+                 , heroku                        >= 0.1.2.2    && < 0.2
 
 executable         ScrumBut
     if flag(library-only)
