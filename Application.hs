@@ -14,7 +14,7 @@ module Application
 
 import Control.Monad.Logger                 (liftLoc, runLoggingT)
 import Database.Persist.Postgresql          (createPostgresqlPool, pgConnStr,
-                                             pgPoolSize, runSqlPool)
+                                             pgPoolSize, runSqlPool, ConnectionString)
 import Import
 import Language.Haskell.TH.Syntax           (qLocation)
 import Network.Wai.Handler.Warp             (Settings, defaultSettings,
@@ -27,6 +27,7 @@ import Network.Wai.Middleware.RequestLogger (Destination (Logger),
                                              mkRequestLogger, outputFormat)
 import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
                                              toLogStr)
+import Web.Heroku.Postgres
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
@@ -65,8 +66,14 @@ makeFoundation appSettings = do
         logFunc = messageLoggerSource tempFoundation appLogger
 
     -- Create the database connection pool
+    #if DEVELOPMENT
+    let connStr = pgConnStr $ appDatabaseConf appSettings
+    #else
+    connStr <- herokuConnStr
+    #endif
+
     pool <- flip runLoggingT logFunc $ createPostgresqlPool
-        (pgConnStr  $ appDatabaseConf appSettings)
+        connStr
         (pgPoolSize $ appDatabaseConf appSettings)
 
     -- Perform database migration using our application's logging settings.
@@ -145,6 +152,10 @@ appMain = do
     -- Run the application with Warp
     runSettings (warpSettings foundation) app
 
+herokuConnStr :: IO ConnectionString
+herokuConnStr = do
+    params <- dbConnParams
+    return $ encodeUtf8 $ unwords $ map (\(k, v) -> k ++ "=" ++ v) params
 
 --------------------------------------------------------------
 -- Functions for DevelMain.hs (a way to run the app from GHCi)
