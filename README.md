@@ -27,7 +27,11 @@ After a milestone with estimates has been completed, the total number of points 
 
 ## Deployment
 
-Although there are many possible ways to deploy ScrumBut, the only _supported_ method is the [Haskell on Heroku](https://haskellonheroku.com) buildpack. Please see the [Haskell on Heroku tutorial](https://haskellonheroku.com/tutorial/) to learn how you can deploy your own copy.
+Although there are many possible ways to deploy ScrumBut, the only _supported_ method is the [Haskell on Heroku](https://haskellonheroku.com) buildpack:
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
+After the template has been deployed, you’ll need to [set up private storage](https://haskellonheroku.com/tutorial/#set-up-private-storage) then [build on a one-off PX dyno](https://haskellonheroku.com/tutorial/#build-on-a-one-off-px-dyno) before the app can be used.
 
 ## License
 
