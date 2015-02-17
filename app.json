@@ -5,11 +5,7 @@
   "env": {
     "BUILDPACK_URL": "https://github.com/mietek/haskell-on-heroku",
     "GITHUB_CLIENT_ID": "",
-    "GITHUB_CLIENT_SECRET": "",
-    "PGDATABASE": "",
-    "PGHOST": "",
-    "PGPASS": "",
-    "PGUSER": ""
+    "GITHUB_CLIENT_SECRET": ""
   },
   "addons": [
     "heroku-postgresql:hobby-dev"
